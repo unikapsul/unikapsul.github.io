@@ -3576,7 +3576,8 @@
         var reasons = [
           [/yılında/, "belgede tarihin yılı yanlış yazılmış (gün adına göre düzeltildi)"],
           [/saatler yeniden başlıyor/, "belgede bu sınavların günü yazılmamış"],
-          [/Saat belgede okunamadı/, "saat belgeden okunamadı"]
+          [/Saat belgede okunamadı|Saat OCR ile okunamadı/, "saat belgeden okunamadı"],
+          [/Taranmış belgeden/, "belge taranmış, değerler görüntüden okundu (yazım hatası olabilir)"]
         ];
         var counts = {};
         var other = 0;
@@ -3660,19 +3661,32 @@
             if (n.department_id === department.id) notices[n.date + "|" + n.text] = n;
           });
           var noticeList = Object.keys(notices).sort().map(function (k) { return notices[k]; });
-          var shown = mine.length ? mine : all;
+          // Seçilen derslerle eşleşme yoksa (bölümün ders programı yüklü değil ya da adlar
+          // farklı) liste belgenin KENDİ sınıf sütununa göre öğrencinin sınıfına süzülür.
+          var gradeMatch = all.filter(function (e) { return String(e.grade_raw) === String(state.grade); });
+          var byGrade = !mine.length && gradeMatch.length > 0 && gradeMatch.length < all.length;
+          var shown = mine.length ? mine : byGrade ? gradeMatch : all;
+          // Bir bölümün birden çok belgesi olabilir (Diş Hekimliği: sınıf başına bir PDF);
+          // kaynak satırı, bağlantı ve belge notları yalnız gösterilen sınavların belgesinden.
+          var shownSources = {};
+          shown.forEach(function (e) { shownSources[e.source_id] = true; });
+          var sourceIds = Object.keys(shownSources);
+          source = examData.sources[sourceIds[0]] || source;
+          noticeList = noticeList.filter(function (n) { return shownSources[n.source_id] || (!mine.length && !byGrade); });
           var review = shown.filter(function (e) { return e.verification_status === "needs_review"; }).length;
-          html += examNext(mine)
+          html += examNext(mine.length ? mine : byGrade ? shown : [])
             + '<p class="exam-source">Bölümün ' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli resmî duyurusundan okundu · insan kontrolünden geçmedi, belge güncellenebilir.'
-            + (source.document_url ? ' <a href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">Belgeyi aç</a>' : '') + '</p>'
+            + (source.document_url && sourceIds.length === 1 ? ' <a href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">Belgeyi aç</a>' : '') + '</p>'
             + (review ? '<p class="exam-banner">' + icon("alert") + '<span>' + examReviewSummary(shown) + ' Ayrıntı için sınava dokun.</span></p>' : '')
-            + '<section class="section"><div class="section-heading"><h2>' + (mine.length ? 'Sınav takvimim' : 'Bölümün ara sınavları') + '</h2>'
+            + '<section class="section"><div class="section-heading"><h2>' + (mine.length ? 'Sınav takvimim' : byGrade ? state.grade + '. sınıf ara sınavları' : 'Bölümün ara sınavları') + '</h2>'
             + '<span class="gpa-sub">' + shown.length + ' sınav</span></div>'
-            + (mine.length ? '' : '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.</p>')
-            + examAgenda(shown, { grade: !mine.length, notes: noticeList })
+            + (mine.length ? '' : byGrade
+                ? '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle eşleşme yok; liste belgedeki sınıf sütununa göre süzüldü. Diğer sınıflar aşağıda.</p>'
+                : '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.</p>')
+            + examAgenda(shown, { grade: !mine.length && !byGrade, notes: noticeList })
             + (noticeList.length ? '<p class="exam-source" style="margin-top:10px">"Belgedeki not" satırları merkezi ve fakülte ortak sınavlar için ayrılmış saattir; onların programı ayrı yayımlanır.</p>' : '')
             + '</section>';
-          if (mine.length) {
+          if (mine.length || byGrade) {
             html += '<section class="section"><details class="gpa-details"><summary><span>Bölümün tüm ara sınavları</span><span class="gpa-sub">' + all.length + ' sınav · bütün sınıflar</span></summary>'
               + '<div class="gpa-details-body">' + examAgenda(all, { grade: true }) + '</div></details></section>';
           }
@@ -3697,13 +3711,15 @@
       function examSheetHtml(exam) {
         if (!exam) return '<p class="sheet-copy">Sınav kaydı bulunamadı.</p>';
         var src = examData.sources[exam.source_id] || {};
+        // Bitiş saatini veren belgede (Diş Hekimliği) süre üretici notunda: "Belgede süre: 09.00–09.50".
+        var endWritten = /Belgede süre: [\d.]+–([\d.]+)/.exec(exam.notes || "");
         return '<div class="sheet-copy">'
           + '<p><strong>' + escapeHtml(exam.course_name) + '</strong>' + (exam.course_code ? ' · ' + escapeHtml(exam.course_code) : '') + '</p>'
           + '<p><strong>Tarih:</strong> ' + escapeHtml(examDay(exam)) + (exam.date ? ' · ' + escapeHtml(examCountdown(exam)) : '') + '</p>'
-          + '<p><strong>Başlangıç:</strong> ' + escapeHtml(examTime(exam)) + ' · bitiş saati belgede yazmıyor</p>'
+          + '<p><strong>Başlangıç:</strong> ' + escapeHtml(examTime(exam)) + ' · ' + (endWritten ? 'belgede bitiş ' + escapeHtml(endWritten[1]) : 'bitiş saati belgede yazmıyor') + '</p>'
           + '<p><strong>Salon:</strong> ' + escapeHtml(exam.room_raw || "belgede boş") + '</p>'
           + (exam.grade_raw ? '<p><strong>Sınıf:</strong> ' + escapeHtml(exam.grade_raw) + '</p>' : '')
-          + (exam.student_count != null ? '<p><strong>Öğrenci sayısı:</strong> ' + exam.student_count + '</p>' : '')
+          + (exam.student_count != null && exam.student_count !== "" ? '<p><strong>Öğrenci sayısı:</strong> ' + escapeHtml(String(exam.student_count)) + '</p>' : '')
           + '<p><strong>Durum:</strong> ' + escapeHtml(statusLabel(exam.verification_status)) + '</p>'
           + (exam.notes ? '<p><strong>Not:</strong> ' + escapeHtml(exam.notes) + '</p>' : '')
           + '<p><strong>Kaynak:</strong> ' + escapeHtml(src.title || "") + ' · yayım ' + escapeHtml(isoDateLabel(src.published_at) || "bilinmiyor") + ' · ' + escapeHtml(exam.source_page) + '</p>'
