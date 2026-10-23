@@ -1013,6 +1013,42 @@
     }
     .repeat-row .grade-select { max-width: 150px; }
     .repeat-row .text-button { white-space: nowrap; }
+    /* Ara sınav ajandası (2026-10-23) */
+    .exam-next { width: 100%; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; align-items: center; margin-bottom: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--teal-2); text-align: left; cursor: pointer; }
+    .exam-next-count { display: grid; place-items: center; color: var(--teal); font-size: 34px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; text-align: center; }
+    .exam-next-count small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 650; }
+    .exam-next-label { display: block; color: var(--teal); font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .exam-next-title { display: block; margin-top: 4px; font-size: 16px; font-weight: 780; line-height: 1.3; overflow-wrap: anywhere; }
+    .exam-next-meta { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .exam-source { margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .exam-source a { color: var(--teal); font-weight: 650; }
+    .exam-banner { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; margin: 0 0 4px; padding: 12px 14px; border-radius: 14px; background: var(--amber-2); color: var(--ink); font-size: 13px; line-height: 1.45; }
+    .exam-banner svg { width: 20px; height: 20px; color: var(--amber); }
+    .exam-day { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+    .exam-day + .exam-day { margin-top: 12px; }
+    .exam-day.past { opacity: .55; }
+    .exam-day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 11px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+    .exam-day-head strong { font-size: 14px; font-weight: 780; text-transform: capitalize; }
+    .exam-day-head span { color: var(--muted); font-size: 13px; }
+    .exam-day-head .exam-day-left { margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .exam-line { width: 100%; display: grid; grid-template-columns: 50px minmax(0, 1fr) 18px; gap: 10px; align-items: center; min-height: 56px; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; cursor: pointer; }
+    .exam-day-head + .exam-line { border-top: 0; }
+    .exam-line > svg { width: 18px; height: 18px; color: var(--muted); }
+    .exam-line.note { grid-template-columns: 50px minmax(0, 1fr); cursor: default; }
+    .exam-time { align-self: start; padding-top: 1px; font-size: 16px; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .exam-body { min-width: 0; }
+    .exam-name { display: block; font-size: 14px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+    .exam-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .exam-chip { padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font-size: 11px; font-weight: 650; line-height: 1.6; overflow-wrap: anywhere; }
+    .exam-chip.warn { background: var(--amber-2); color: var(--amber); }
+    .exam-note-label { display: block; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .exam-note { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+    @media (max-width: 360px) {
+      .exam-next { grid-template-columns: 60px minmax(0, 1fr); gap: 10px; padding: 14px; }
+      .exam-next-count { font-size: 28px; }
+      .exam-line { grid-template-columns: 44px minmax(0, 1fr) 16px; gap: 8px; padding: 10px 12px; }
+      .exam-time { font-size: 15px; }
+    }
     .gpa-details {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -3465,15 +3501,107 @@
         return calendarEvents().find(function (e) { return e.term === "guz" && /Ara Sınav Dönemi/.test(e.title); }) || null;
       }
 
-      function examRow(exam) {
-        return '<button class="list-card" data-exam="' + escapeHtml(exam.exam_id) + '">'
-          + '<span class="icon-tile">' + icon(exam.verification_status === "needs_review" ? "alert" : "calendar") + '</span>'
-          + '<span><span class="list-title">' + escapeHtml(exam.course_name) + '</span>'
-          + '<span class="list-meta">' + escapeHtml(examDay(exam)) + ' · ' + escapeHtml(examTime(exam))
-          + (exam.room_raw ? ' · Salon: ' + escapeHtml(exam.room_raw) : '')
-          + (exam.grade_raw ? ' · ' + escapeHtml(/^\d/.test(exam.grade_raw) ? exam.grade_raw + '. sınıf' : exam.grade_raw) : '')
-          + (exam.verification_status === "needs_review" ? '<br>Kontrol bekliyor — belgeyle karşılaştır' : '')
-          + '</span></span>' + icon("chevron") + '</button>';
+      // Sınav ekranı ajanda düzenindedir (2026-10-23, kullanıcı: "tasarımını
+      // beğenmedim"): önce sıradaki sınav, sonra günlere göre gruplu satırlar.
+      // Satırda solda saat, ortada ders, altında salon etiketi; kontrol
+      // bekleyen sınav gizlenmez, kısa bir etiketle işaretlenir.
+      function examDateParts(iso) {
+        if (!iso) return { weekday: "Tarih okunamadı", date: "" };
+        var d = new Date(iso + "T12:00:00Z");
+        return {
+          weekday: new Intl.DateTimeFormat("tr-TR", { weekday: "long", timeZone: "UTC" }).format(d),
+          date: new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", timeZone: "UTC" }).format(d)
+        };
+      }
+
+      function examGradeLabel(raw) {
+        return /^\d/.test(raw) ? raw + ". sınıf" : raw;
+      }
+
+      function examLine(exam, opts) {
+        opts = opts || {};
+        var meta = [];
+        if (exam.room_raw) meta.push('<span class="exam-chip">Salon ' + escapeHtml(exam.room_raw) + '</span>');
+        if (opts.grade && exam.grade_raw) meta.push('<span class="exam-chip">' + escapeHtml(examGradeLabel(exam.grade_raw)) + '</span>');
+        if (opts.clash) meta.push('<span class="exam-chip warn">Belgede bu saatte ' + opts.clash + ' sınav var</span>');
+        if (exam.verification_status === "needs_review") meta.push('<span class="exam-chip warn">Kontrol bekliyor</span>');
+        return '<button class="exam-line" data-exam="' + escapeHtml(exam.exam_id) + '">'
+          + '<span class="exam-time">' + escapeHtml(exam.start_time || "—") + '</span>'
+          + '<span class="exam-body"><span class="exam-name">' + escapeHtml(exam.course_name) + '</span>'
+          + (meta.length ? '<span class="exam-meta">' + meta.join("") + '</span>' : '')
+          + '</span>' + icon("chevron") + '</button>';
+      }
+
+      // Liste günlere bölünür; belgedeki merkezi/ortak sınav notları kendi
+      // gününün altında, sınavlardan ayrı biçimde durur.
+      function examAgenda(list, opts) {
+        opts = opts || {};
+        var days = {};
+        var slots = {};
+        var flagged = {};
+        list.forEach(function (e) {
+          (days[e.date || ""] = days[e.date || ""] || { exams: [], notes: [] }).exams.push(e);
+          var k = e.date + "|" + e.start_time;
+          if (e.date && e.start_time) slots[k] = (slots[k] || 0) + 1;
+        });
+        // Aynı saatteki sınav sayısı yalnız o saatin ilk satırında yazılır.
+        function clashOf(e) {
+          var k = e.date + "|" + e.start_time;
+          if (!(slots[k] > 1) || flagged[k]) return 0;
+          flagged[k] = true;
+          return slots[k];
+        }
+        (opts.notes || []).forEach(function (n) {
+          (days[n.date || ""] = days[n.date || ""] || { exams: [], notes: [] }).notes.push(n);
+        });
+        return Object.keys(days).sort(function (a, b) { return (a || "9").localeCompare(b || "9"); }).map(function (iso) {
+          var day = days[iso];
+          var parts = examDateParts(iso);
+          var left = iso ? daysUntil(iso) : null;
+          var rows = day.exams.map(function (e) { return { t: e.start_time || "99", html: examLine(e, { grade: opts.grade, clash: clashOf(e) }) }; })
+            .concat(day.notes.map(function (n) {
+              return { t: n.time || "99", html: '<div class="exam-line note"><span class="exam-time">' + escapeHtml(n.time || "—") + '</span><span class="exam-body"><span class="exam-note-label">Belgedeki not</span><span class="exam-note">' + escapeHtml(n.text) + '</span></span></div>' };
+            }))
+            .sort(function (a, b) { return a.t.localeCompare(b.t); });
+          return '<div class="exam-day' + (left !== null && left < 0 ? ' past' : '') + '">'
+            + '<div class="exam-day-head"><strong>' + escapeHtml(parts.weekday) + '</strong><span>' + escapeHtml(parts.date) + '</span>'
+            + (left !== null ? '<span class="exam-day-left">' + escapeHtml(left < 0 ? "geçti" : left === 0 ? "bugün" : left === 1 ? "yarın" : left + " gün") + '</span>' : '')
+            + '</div>' + rows.map(function (r) { return r.html; }).join("") + '</div>';
+        }).join("");
+      }
+
+      // Kontrol bekleyen sınavların nedeni üretici notundan okunur ve bir kez,
+      // ekranın üstünde söylenir (her satırda yalnız kısa etiket kalır).
+      function examReviewSummary(list) {
+        var reasons = [
+          [/yılında/, "belgede tarihin yılı yanlış yazılmış (gün adına göre düzeltildi)"],
+          [/saatler yeniden başlıyor/, "belgede bu sınavların günü yazılmamış"],
+          [/Saat belgede okunamadı/, "saat belgeden okunamadı"]
+        ];
+        var counts = {};
+        var other = 0;
+        list.forEach(function (e) {
+          if (e.verification_status !== "needs_review") return;
+          var hit = reasons.filter(function (r) { return r[0].test(e.notes || ""); });
+          if (!hit.length) other += 1;
+          hit.forEach(function (r) { counts[r[1]] = (counts[r[1]] || 0) + 1; });
+        });
+        var parts = reasons.filter(function (r) { return counts[r[1]]; }).map(function (r) { return counts[r[1]] + " sınavda " + r[1]; });
+        if (other) parts.push(other + " sınavda belgeyle karşılaştırılması gereken bir bilgi var");
+        return "Kontrol bekliyor: " + parts.join("; ") + ".";
+      }
+
+      function examNext(list) {
+        var next = list.filter(function (e) { return e.date && daysUntil(e.date) >= 0; })[0];
+        if (!next) return "";
+        var left = daysUntil(next.date);
+        var parts = examDateParts(next.date);
+        return '<button class="exam-next" data-exam="' + escapeHtml(next.exam_id) + '">'
+          + '<span class="exam-next-count">' + (left === 0 ? 'Bugün' : left === 1 ? 'Yarın' : left + '<small>gün kaldı</small>') + '</span>'
+          + '<span class="exam-body"><span class="exam-next-label">Sıradaki sınavın</span>'
+          + '<span class="exam-next-title">' + escapeHtml(next.course_name) + '</span>'
+          + '<span class="exam-next-meta">' + escapeHtml(parts.date + ' ' + parts.weekday) + (next.start_time ? ' · ' + escapeHtml(next.start_time) : '')
+          + (next.room_raw ? ' · Salon ' + escapeHtml(next.room_raw) : '') + '</span></span></button>';
       }
 
       function examTodayCard() {
@@ -3484,8 +3612,8 @@
         var copy;
         if (mine.length) {
           var first = mine[0];
-          copy = 'İlk sınavın ' + escapeHtml(examDay(first)) + ' ' + escapeHtml(first.start_time || '') + ' · ' + escapeHtml(first.course_name)
-            + (first.date ? ' · ' + escapeHtml(examCountdown(first)) : '');
+          copy = (first.date ? escapeHtml(examCountdown(first)) + ' · ' : '') + escapeHtml(first.course_name) + ' · '
+            + escapeHtml(examDay(first)) + (first.start_time ? ' ' + escapeHtml(first.start_time) : '');
         } else if (all.length) {
           copy = 'Bölümünün ara sınav programı yayımlandı · ' + all.length + ' sınav';
         } else if (period && daysUntil(period.start) >= 0 && daysUntil(period.start) <= 30) {
@@ -3506,7 +3634,7 @@
         if (!all.length) return "";
         return '<section class="section"><div class="section-heading"><h2>Ara sınav</h2><button class="text-button" data-route="exams">Tüm sınavlarım</button></div>'
           + (list.length
-              ? '<div class="list-stack">' + list.map(examRow).join("") + '</div>'
+              ? examAgenda(list)
               : '<p class="sheet-copy">Bölümün ara sınav programında bu dersle birebir eşleşen sınav bulunamadı. Ders adı belgede farklı yazılmış olabilir; tüm listeye bak.</p>')
           + '</section>';
       }
@@ -3527,26 +3655,27 @@
                 : '<h3>Bu bölümün duyuruları henüz izlenmiyor</h3><p>' + escapeHtml(department.name) + ' için duyuru sayfası adresi elimizde yok; sınav programı yayımlanmış olabilir. Bölümünün kendi duyuru sayfasına bak.')
             + (period ? ' Akademik takvime göre ara sınav dönemi ' + escapeHtml(eventDateLabel(period)) + '.' : '') + '</p></div>';
         } else {
-          html += '<p class="sheet-copy">' + escapeHtml(department.name) + ' ara sınav programı, bölümün '
-            + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli resmî duyurusundan okundu. Henüz bir insan tarafından kontrol edilmedi; belge güncellenebilir.</p>'
-            + '<section class="section"><div class="section-heading"><h2>Seçtiğin derslerin sınavları</h2></div>'
-            + (mine.length ? '<div class="list-stack">' + mine.map(examRow).join("") + '</div>'
-                : '<p class="sheet-copy">Seçtiğin derslerle birebir eşleşen sınav yok. Ders adı belgede farklı yazılmış olabilir; aşağıdaki tam listeye bak.</p>')
-            + '</section>';
           var notices = {};
           (examData.notices || []).forEach(function (n) {
             if (n.department_id === department.id) notices[n.date + "|" + n.text] = n;
           });
           var noticeList = Object.keys(notices).sort().map(function (k) { return notices[k]; });
-          if (noticeList.length) {
-            html += '<section class="section"><div class="section-heading"><h2>Belgedeki diğer notlar</h2></div><div class="settings-card">'
-              + noticeList.map(function (n) {
-                  return '<div class="setting-row">' + icon("info") + '<span>' + escapeHtml(examDay(n)) + (n.time ? ' ' + escapeHtml(n.time) : '') + ' · ' + escapeHtml(n.text) + '</span></div>';
-                }).join("")
-              + '</div><p class="sheet-copy" style="margin-top:8px">Merkezi ve fakülte ortak sınavların kendi programı ayrı yayımlanır; bu satırlar yalnız belgede ayrılmış saati gösterir.</p></section>';
+          var shown = mine.length ? mine : all;
+          var review = shown.filter(function (e) { return e.verification_status === "needs_review"; }).length;
+          html += examNext(mine)
+            + '<p class="exam-source">Bölümün ' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli resmî duyurusundan okundu · insan kontrolünden geçmedi, belge güncellenebilir.'
+            + (source.document_url ? ' <a href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">Belgeyi aç</a>' : '') + '</p>'
+            + (review ? '<p class="exam-banner">' + icon("alert") + '<span>' + examReviewSummary(shown) + ' Ayrıntı için sınava dokun.</span></p>' : '')
+            + '<section class="section"><div class="section-heading"><h2>' + (mine.length ? 'Sınav takvimim' : 'Bölümün ara sınavları') + '</h2>'
+            + '<span class="gpa-sub">' + shown.length + ' sınav</span></div>'
+            + (mine.length ? '' : '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.</p>')
+            + examAgenda(shown, { grade: !mine.length, notes: noticeList })
+            + (noticeList.length ? '<p class="exam-source" style="margin-top:10px">"Belgedeki not" satırları merkezi ve fakülte ortak sınavlar için ayrılmış saattir; onların programı ayrı yayımlanır.</p>' : '')
+            + '</section>';
+          if (mine.length) {
+            html += '<section class="section"><details class="gpa-details"><summary><span>Bölümün tüm ara sınavları</span><span class="gpa-sub">' + all.length + ' sınav · bütün sınıflar</span></summary>'
+              + '<div class="gpa-details-body">' + examAgenda(all, { grade: true }) + '</div></details></section>';
           }
-          html += '<section class="section"><details class="gpa-details"><summary><span>Bölümün tüm ara sınavları</span><span class="gpa-sub">' + all.length + ' sınav</span></summary>'
-            + '<div class="gpa-details-body"><div class="list-stack">' + all.map(examRow).join("") + '</div></div></details></section>';
         }
         var others = (examData.unparsed || []).filter(function (u) { return u.department_ids.indexOf(department.id) !== -1; });
         // Formasyon programı birden çok birimin duyurusunda aynı başlıkla
@@ -3555,12 +3684,12 @@
           .sort(function (a, b) { return String(b.published_at).localeCompare(String(a.published_at)); });
         if (formasyon.length) others = others.concat(team() ? formasyon : [formasyon[0]]);
         if (others.length) {
-          html += '<section class="section"><div class="section-heading"><h2>Henüz okunmayan belgeler</h2></div><div class="list-stack">'
+          html += '<section class="section"><details class="gpa-details"><summary><span>Uygulamaya henüz eklenmeyen belgeler</span><span class="gpa-sub">' + others.length + ' belge · resmî sayfada açılır</span></summary><div class="gpa-details-body"><div class="list-stack">'
             + others.map(function (u) {
                 return '<a class="list-card" href="' + escapeHtml(safeOfficialUrl(u.document_urls[0])) + '" target="_blank" rel="noopener noreferrer">'
                   + '<span class="icon-tile">' + icon("database") + '</span><span><span class="list-title">' + escapeHtml(u.title) + '</span>'
                   + '<span class="list-meta">' + escapeHtml(isoDateLabel(u.published_at) || "") + (team() ? ' · ' + escapeHtml(u.reason) : ' · uygulamada gösterilmiyor, belgeyi aç') + '</span></span>' + icon("chevron") + '</a>';
-              }).join("") + '</div></section>';
+              }).join("") + '</div></div></details></section>';
         }
         screen.innerHTML = layout(html, "", true);
       }
