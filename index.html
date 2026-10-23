@@ -1131,6 +1131,9 @@
     .contact-address span { color: var(--muted); font-size: 12px; }
     .contact-address strong { font-size: 15px; overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
     .contact-address .text-button { justify-self: start; min-height: 44px; }
+    .advisor-card { display: grid; gap: 8px; margin: 0 0 4px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+    .advisor-card label { font-size: 13px; font-weight: 720; }
+    .advisor-others summary { min-height: 44px; display: flex; align-items: center; color: var(--teal); font-size: 13px; font-weight: 720; cursor: pointer; }
     .grade-conflict { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
     .conflict-choice { width: 100%; min-height: 48px; display: grid; gap: 2px; justify-items: start; text-align: left; padding: 10px 12px; }
     .course-group { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 18px; }
@@ -1554,6 +1557,21 @@
   <script>
     (function () {
       "use strict";
+      /*
+       * Çerçeve koruması (2026-10-23). GitHub Pages X-Frame-Options göndermiyor, sayfa içi CSP de
+       * frame-ancestors koyamıyor; kötü niyetli bir sayfa uygulamayı görünmez bir çerçevede açıp
+       * öğrenciye "dersi kaldır" gibi düğmelere bastırabilirdi. Yalnız yayın adresinde uygulanır:
+       * özel demo bağlantısı başka bir kökende, kendi çerçevesinde çalışmaya devam eder.
+       */
+      var PUBLIC_HOSTS = ["unikapsul.github.io"];
+      var framed = true;
+      try { framed = window.top !== window.self; } catch (error) {}
+      if (framed && PUBLIC_HOSTS.indexOf(location.hostname) !== -1) {
+        document.body.innerHTML = '<p style="max-width:32rem;margin:2rem auto;padding:0 16px;font:16px/1.5 system-ui,sans-serif">'
+          + 'ÜniKapsül başka bir sayfanın içinde açılamaz. <a href="https://unikapsul.github.io/" target="_top" rel="noopener noreferrer">Doğrudan aç</a></p>';
+        return;
+      }
+
 
       var STORAGE_KEY = "unikapsul-prototype-v2";
       // Tek iletişim kanalı (legal-safety-contract.md §5 kapı 4): hata bildirimi, düzeltme ve
@@ -1873,6 +1891,9 @@
       var defaultState = {
         version: 6,
         onboarded: false,
+        // İlk kurulumda birim, bölüm ve sınıf önceden seçili gelmez (2026-10-23, kullanıcı isteği):
+        // öğrenci kendisi seçmeden "Derslerimi seç" açılmaz. Kurulum bitince seçim kalıcıdır.
+        setup: { faculty: false, department: false, grade: false },
         route: "onboarding-1",
         previousRoute: "today",
         faculty: "fen",
@@ -1909,7 +1930,9 @@
         // Çift ana dal / yan dal: öğrencinin ikinci programı. Ders seçerken hangi
         // programın listesine bakıldığı `pickProgram` ile tutulur.
         second: { department: "", grade: 1, kind: "cap" },
-        pickProgram: "main"
+        pickProgram: "main",
+        // Lisansüstü: öğrencinin kendi seçtiği danışman, program başına ({ bölümKimliği: "ad" }).
+        advisors: {}
       };
 
       /*
@@ -1921,7 +1944,7 @@
        */
       var STATE_ROUTES = ["onboarding-1", "onboarding-2", "today", "program", "agenda", "more", "notifications", "course-add", "course-detail", "campus", "grades", "attendance", "exams", "curriculum"];
       var STATE_DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum"];
-      var BACKUP_STATE_KEYS = ["faculty", "department", "grade", "second", "selected", "customCourses", "absences", "grades", "gradeConflicts", "gpa", "theme", "textScale", "reduceMotion", "notifyProgram", "notifyCalendar"];
+      var BACKUP_STATE_KEYS = ["faculty", "department", "grade", "second", "selected", "customCourses", "absences", "grades", "gradeConflicts", "advisors", "gpa", "theme", "textScale", "reduceMotion", "notifyProgram", "notifyCalendar"];
 
       function freshDefaultState() {
         return JSON.parse(JSON.stringify(defaultState));
@@ -2105,6 +2128,12 @@
 
         var booleans = ["onboarded", "notificationsRead", "notifyProgram", "notifyCalendar", "teamView", "themeChosen", "reduceMotion"];
         if (!booleans.every(copyBoolean)) return null;
+        if (own(input, "setup")) {
+          if (!plainObject(input.setup)) return null;
+          ["faculty", "department", "grade"].forEach(function (key) { clean.setup[key] = input.setup[key] === true; });
+        } else if (clean.onboarded) {
+          clean.setup = { faculty: true, department: true, grade: true };
+        }
         if (!copyEnum("route", STATE_ROUTES) || !copyEnum("previousRoute", STATE_ROUTES)) return null;
         if (!copyEnum("day", STATE_DAYS) || !copyEnum("courseFilter", ["grade", "all"])) return null;
         if (!copyEnum("agenda", ["announcements", "calendar", "opportunities"])) return null;
@@ -2147,6 +2176,13 @@
           if (!Array.isArray(record.components)) record.components = [];
           record.components = record.components.filter(plainObject);
         });
+        if (own(input, "advisors")) {
+          if (!plainObject(input.advisors)) return null;
+          Object.keys(input.advisors).forEach(function (key) {
+            var name = cleanText(input.advisors[key], 120, false);
+            if (departments[key] && name) clean.advisors[key] = name;
+          });
+        }
         if (own(input, "gradeConflicts")) {
           var conflictsCopy = safeJsonCopy(input.gradeConflicts);
           if (!plainObject(conflictsCopy)) return null;
@@ -3104,12 +3140,13 @@
           + '<div class="local-note">' + icon("shield") + '<span>' + escapeHtml(INDEPENDENCE_NOTE) + '</span></div>'
           + '<div class="form-card">'
           + fieldStatic("Üniversite", "Niğde Ömer Halisdemir Üniversitesi")
-          + fieldSelect("Akademik birim", "faculty-select", faculties, state.faculty)
-          + fieldSelect("Program / Bölüm", "department-select", departmentOptions, state.department)
-          + fieldSelect(gradeFieldLabel(department), "grade-select", gradeOptions(department), String(state.grade))
+          + fieldSelect("Akademik birim", "faculty-select", faculties, setupDone("faculty") ? state.faculty : null, "Akademik birimini seç")
+          + fieldSelect("Program / Bölüm", "department-select", setupDone("faculty") ? departmentOptions : [], setupDone("department") ? state.department : null, setupDone("faculty") ? "Bölümünü seç" : "Önce akademik birimi seç")
+          + fieldSelect(gradeFieldLabel(department), "grade-select", setupDone("department") ? gradeOptions(department) : [], setupDone("grade") ? String(state.grade) : null, setupDone("department") ? "Seç" : "Önce bölümünü seç")
           + fieldStatic("Dönem", "2026–2027 Güz")
           + '</div>'
-          + '<button class="primary-button" style="width:100%;margin-top:16px" data-action="onboarding-next">Derslerimi seç ' + icon("chevron") + '</button>'
+          + '<button class="primary-button" style="width:100%;margin-top:16px" data-action="onboarding-next"' + (setupDone("grade") ? '' : ' disabled aria-disabled="true"') + '>Derslerimi seç ' + icon("chevron") + '</button>'
+          + (setupDone("grade") ? '' : '<p class="legal-note">Devam etmek için birimini, bölümünü ve sınıfını seç.</p>')
           + '<p class="legal-note">' + (team() ? catalog.summary.unitCount + ' akademik birim ve ' + catalog.summary.programCount + ' öğrenci programı seçeneği kataloglandı · Lisansüstü seçenekler program aşamasıyla çalışır.<br>' : '') + 'Resmî uygulama değildir; OBS bilgisi veya hesap gerekmez.</p>';
         screen.innerHTML = layout(html, "", true);
       }
@@ -3118,9 +3155,16 @@
         return '<div class="field"><label>' + escapeHtml(label) + '</label><div class="field-static">' + escapeHtml(value) + '</div></div>';
       }
 
-      function fieldSelect(label, id, options, value) {
+      // Kurulumda seçilmemiş alan; kurulum bittiyse (ya da öğrenci seçtiyse) gerçek değer gösterilir.
+      function setupDone(key) {
+        return state.onboarded || !!(state.setup && state.setup[key]);
+      }
+
+      function fieldSelect(label, id, options, value, placeholder) {
         var safeId = escapeHtml(id);
-        return '<div class="field"><label for="' + safeId + '">' + escapeHtml(label) + '</label><div class="select-wrap"><select class="select" id="' + safeId + '">'
+        var empty = value === null || value === undefined;
+        return '<div class="field"><label for="' + safeId + '">' + escapeHtml(label) + '</label><div class="select-wrap"><select class="select" id="' + safeId + '"' + (placeholder && !options.length ? ' disabled' : '') + '>'
+          + (placeholder && empty ? '<option value="" selected disabled>' + escapeHtml(placeholder) + '</option>' : '')
           + options.map(function (option) { return '<option value="' + escapeHtml(option.id) + '"' + (String(option.id) === String(value) ? " selected" : "") + '>' + escapeHtml(option.name) + '</option>'; }).join("")
           + '</select>' + icon("chevron") + '</div></div>';
       }
@@ -3131,12 +3175,74 @@
        * olan ders tek başlık altında görünür; öğretim elemanı aynıysa diğer oturumları
        * tek dokunuşla eklemek önerilir, farklıysa yalnız uyarı yazılır.
        */
+      /*
+       * Danışmanım (2026-10-23). Lisansüstü belgelerde Özel Konular ve Danışmanlık her
+       * danışmanın kendi saatidir (Afet Yönetimi: 13 danışman, 29 blok); öğrenci yalnız
+       * kendi danışmanınınkini alır. Öğrenci danışmanını belgedeki adlardan bir kez seçer,
+       * yalnız onun saatleri gösterilir; diğerleri silinmez, kapalı bir bölümde durur.
+       * Danışman tahmin edilmez; ad yalnız öğrencinin kendi programının belgesinden ve
+       * belgede yazdığı biçimde gelir. Kişiye göre arama ya da listeleme değildir
+       * (legal-safety-contract.md §3): seçim yalnız bu cihazda, yalnız ders listesini süzer.
+       */
+      var ADVISOR_COURSES = ["ÖZEL KONULAR", "DANIŞMANLIK"];
+
+      function isAdvisorCourse(course) {
+        return ADVISOR_COURSES.indexOf(String(course.name || "").toLocaleUpperCase("tr-TR").replace(/\s+/g, " ").trim()) !== -1;
+      }
+
+      function advisorNames(course) {
+        return String(course.instructor || "").split(/\s*\/\s*/).map(function (n) { return n.trim(); })
+          .filter(function (n) { return n && n !== REMOVED_NAME && n !== "Kaynakta belirtilmemiş"; });
+      }
+
+      function advisorOf(departmentId) {
+        return (state.advisors || {})[departmentId] || "";
+      }
+
+      function advisorChoices(departmentId) {
+        var seen = Object.create(null);
+        var out = [];
+        coursesFor(departments[departmentId]).filter(isAdvisorCourse).forEach(function (course) {
+          advisorNames(course).forEach(function (name) { if (!seen[name]) { seen[name] = true; out.push(name); } });
+        });
+        return out.sort(function (a, b) { return a.localeCompare(b, "tr"); });
+      }
+
+      function isMyAdvisorSession(course) {
+        var mine = advisorOf(course.departmentId);
+        return !!mine && advisorNames(course).indexOf(mine) !== -1;
+      }
+
+      function advisorPicker(departmentId) {
+        var names = advisorChoices(departmentId);
+        if (!names.length) return "";
+        var mine = advisorOf(departmentId);
+        return '<div class="advisor-card"><label for="advisor-select">Danışmanım</label>'
+          + '<div class="select-wrap"><select class="select" id="advisor-select" data-advisor-dept="' + escapeHtml(departmentId) + '">'
+          + '<option value=""' + (mine ? '' : ' selected') + '>' + (mine ? 'Danışmanımı kaldır' : 'Danışmanını seç') + '</option>'
+          + names.map(function (n) { return '<option value="' + escapeHtml(n) + '"' + (n === mine ? ' selected' : '') + '>' + escapeHtml(n) + '</option>'; }).join("")
+          + '</select>' + icon("chevron") + '</div>'
+          + '<p class="group-note">' + icon("info") + '<span>' + (mine
+              ? 'Özel Konular ve Danışmanlık’ta yalnız danışmanının saatleri gösteriliyor. Adlar ders programı belgesinde yazdığı gibidir; seçimin yalnız bu cihazda kalır.'
+              : 'Özel Konular ve Danışmanlık her danışmanın kendi saatidir. Danışmanını seçersen yalnız onun saatleri görünür.') + '</span></p></div>';
+      }
+
       function sessionsOf(key) {
-        return myCoursePool().filter(function (course) { return absenceKey(course) === key; });
+        return myCoursePool().filter(function (course) {
+          if (absenceKey(course) !== key) return false;
+          return !isAdvisorCourse(course) || !advisorOf(course.departmentId) || isMyAdvisorSession(course);
+        });
       }
 
       function groupSuggestion(key) {
         var sessions = sessionsOf(key);
+        if (sessions.length && isAdvisorCourse(sessions[0])) {
+          var mineAll = sessions.filter(function (c) { return state.selected.indexOf(c.id) === -1; }).length;
+          var anyPicked = sessions.some(function (c) { return state.selected.indexOf(c.id) !== -1; });
+          if (!advisorOf(sessions[0].departmentId) || !anyPicked || !mineAll) return "";
+          return '<button class="text-button group-add" data-group-add="' + escapeHtml(key) + '">' + icon("plus")
+            + ' Danışmanının diğer ' + mineAll + ' saatini de ekle</button>';
+        }
         var picked = sessions.filter(function (c) { return state.selected.indexOf(c.id) !== -1; });
         var missing = sessions.length - picked.length;
         if (!picked.length || !missing) return "";
@@ -3148,7 +3254,31 @@
         return '<p class="group-note">' + icon("info") + '<span>Oturumların öğretim elemanı farklı; ayrı şubeler olabilir. Yalnız kendi şubenin oturumlarını ekle.</span></p>';
       }
 
+      function advisorGroup(key, items) {
+        var first = items[0];
+        var mine = advisorOf(first.departmentId);
+        var head = '<p class="course-group-head">' + escapeHtml(first.name) + ' <span>· ' + (mine ? 'danışmanının saatleri' : items.length + ' saat · danışmanına göre') + '</span></p>';
+        if (!mine) {
+          return '<div class="course-group" role="group" aria-label="' + escapeHtml(first.name) + '">' + head
+            + '<details class="advisor-others"' + (items.some(function (c) { return state.selected.indexOf(c.id) !== -1; }) ? ' open' : '') + '><summary>Bütün danışmanların saatlerini göster (' + items.length + ')</summary>'
+            + '<div class="list-stack" style="margin-top:8px">' + items.map(courseOption).join("") + '</div></details></div>';
+        }
+        var own = items.filter(isMyAdvisorSession);
+        var others = items.filter(function (c) { return !isMyAdvisorSession(c); });
+        return '<div class="course-group" role="group" aria-label="' + escapeHtml(first.name) + '">' + head
+          + (own.length ? own.map(courseOption).join("") : '<p class="group-note">' + icon("info") + '<span>Belgede bu derste danışmanının adına saat yazmıyor.</span></p>')
+          + groupSuggestion(key)
+          + (others.length ? '<details class="advisor-others"' + (others.some(function (c) { return state.selected.indexOf(c.id) !== -1; }) ? ' open' : '') + '><summary>Diğer danışmanların saatleri (' + others.length + ')</summary>'
+              + '<div class="list-stack" style="margin-top:8px">' + others.map(courseOption).join("") + '</div></details>' : '')
+          + '</div>';
+      }
+
       function courseGroupList(list) {
+        var picker = list.some(isAdvisorCourse) ? advisorPicker(list.filter(isAdvisorCourse)[0].departmentId) : "";
+        return picker + courseGroupItems(list);
+      }
+
+      function courseGroupItems(list) {
         var order = [];
         var map = Object.create(null);
         list.forEach(function (course) {
@@ -3160,6 +3290,7 @@
           var items = map[key].sort(function (a, b) {
             return STATE_DAYS.indexOf(a.day) - STATE_DAYS.indexOf(b.day) || String(a.start).localeCompare(String(b.start));
           });
+          if (isAdvisorCourse(items[0])) return advisorGroup(key, items);
           if (items.length === 1) return courseOption(items[0]);
           return '<div class="course-group" role="group" aria-label="' + escapeHtml(items[0].name) + ', ' + items.length + ' oturum">'
             + '<p class="course-group-head">' + (items[0].code ? escapeHtml(items[0].code) + ' · ' : '') + escapeHtml(items[0].name)
@@ -5332,6 +5463,7 @@
           return;
         }
         if (action === "onboarding-next") {
+          if (!setupDone("grade")) return;
           state.query = "";
           state.courseFilter = "grade";
           route("onboarding-2");
@@ -5449,6 +5581,10 @@
           var department = Object.keys(departments).map(function (key) { return departments[key]; }).find(function (item) { return item.facultyId === state.faculty; });
           state.department = department.id;
           state.grade = 1;
+          if (!state.setup) state.setup = {};
+          state.setup.faculty = true;
+          state.setup.department = false;
+          state.setup.grade = false;
           keepSecondSelections();
           state.day = department.defaultDay;
           state.detailCourse = department.conflictPair[0] || "";
@@ -5463,6 +5599,10 @@
           state.department = nextDepartment.id;
           state.faculty = nextDepartment.facultyId;
           state.grade = Math.min(state.grade, nextDepartment.years);
+          if (!state.setup) state.setup = {};
+          state.setup.faculty = true;
+          state.setup.department = true;
+          if (!state.onboarded) { state.setup.grade = false; state.grade = 1; }
           keepSecondSelections();
           state.day = nextDepartment.defaultDay;
           state.detailCourse = nextDepartment.conflictPair[0] || "";
@@ -5472,8 +5612,20 @@
           renderOnboardingOne();
           return;
         }
+        if (event.target.id === "advisor-select") {
+          var advisorDept = event.target.getAttribute("data-advisor-dept");
+          if (!state.advisors) state.advisors = {};
+          if (event.target.value) state.advisors[advisorDept] = event.target.value;
+          else delete state.advisors[advisorDept];
+          persist();
+          render();
+          toast(event.target.value ? "Danışmanının saatleri gösteriliyor." : "Danışman seçimi kaldırıldı.");
+          return;
+        }
         if (event.target.id === "grade-select") {
           state.grade = Number(event.target.value);
+          if (!state.setup) state.setup = {};
+          state.setup.grade = true;
           state.query = "";
           state.courseFilter = "grade";
           persist();
@@ -5579,6 +5731,8 @@
       if ("serviceWorker" in navigator && (location.protocol === "https:" || /[?&]sw=1/.test(location.search))) {
         navigator.serviceWorker.register("sw.js").catch(function () {});
       }
+      // Tarayıcıdan, yer darlığında bu sitenin verisini silmemesini iste (izin vermeyebilir).
+      try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (error) {}
 
       migrateAttendance();
       applyViewFromHash();
