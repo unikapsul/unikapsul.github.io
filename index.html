@@ -1507,6 +1507,307 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
     }
+
+    /*
+     * Tasarım katmanı (2026-10-24, kullanıcı şartnamesi "Tasarım A yerleşimi + A+ renkleri").
+     * Bu blok yalnız görünümü yeniden tanımlar; işlev ve veri koduna dokunmaz. Eski jeton
+     * adları (--teal ...) yeni ana renge bağlanır, böylece bütün ekranlar aynı paleti alır.
+     * Yazı tipi yerel (fonts/KAYNAK.md): dışarıya istek yok, çevrimdışı çalışır.
+     */
+    @font-face {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 400 800;
+      font-display: swap;
+      src: url("fonts/inter-latin-ext.woff2") format("woff2");
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 400 800;
+      font-display: swap;
+      src: url("fonts/inter-latin.woff2") format("woff2");
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    :root {
+      /* Renk */
+      --page: #fafbfe;
+      --surface: #ffffff;
+      --surface-2: #fafbfe;
+      --surface-3: #eff3f9;
+      --ink: #101d3f;
+      --muted: #5c6782;
+      --line: #e5eaf3;
+      --primary: #3168d5;
+      --primary-2: #eaf3ff;
+      --on-primary: #ffffff;
+      --hero-a: #eaf3ff;
+      --hero-b: #c9dfff;
+      --tint-blue: #eaf3ff;
+      --tint-blue-ink: #2c5fc6;
+      --tint-violet: #f1efff;
+      --tint-violet-ink: #5a46c4;
+      --tint-cream: #fff7ec;
+      --tint-cream-ink: #b25a08;
+      --tint-green: #ecf9f1;
+      --tint-green-ink: #1c7a4c;
+      --chip-on-tint: rgba(255, 255, 255, .72);
+      --rail-idle: #c7cedc;
+      --muted-on-hero: #4a556f;
+      --teal: var(--primary);
+      --teal-2: var(--primary-2);
+      --on-teal: var(--on-primary);
+      --blue: var(--primary);
+      --blue-2: var(--primary-2);
+      --amber-2: var(--tint-cream);
+      --green-2: var(--tint-green);
+      --card-shadow: 0 6px 22px rgba(16, 29, 63, .05);
+      /* Ölçü */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --radius: 20px;
+      --radius-lg: 24px;
+      --radius-sm: 14px;
+      --radius-pill: 999px;
+      /* Yazı */
+      --fs-title: 30px;
+      --fs-section: 21px;
+      --fs-card: 17px;
+      --fs-body: 15px;
+      --fs-meta: 13px;
+      --fs-small: 12px;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    :root[data-app-theme="dark"] {
+      --page: #0b1220;
+      --surface: #131c2e;
+      --surface-2: #0b1220;
+      --surface-3: #1b2539;
+      --ink: #eef2fa;
+      --muted: #a6b1c7;
+      --line: #263249;
+      --primary: #8ab4ff;
+      --primary-2: #1a2a4a;
+      --on-primary: #0b1220;
+      --hero-a: #172a4d;
+      --hero-b: #1f3c6b;
+      --tint-blue: #17243f;
+      --tint-blue-ink: #9cc0ff;
+      --tint-violet: #201d3c;
+      --tint-violet-ink: #c0b4ff;
+      --tint-cream: #2c2317;
+      --tint-cream-ink: #f2b871;
+      --tint-green: #132a20;
+      --tint-green-ink: #82d6aa;
+      --chip-on-tint: rgba(255, 255, 255, .07);
+      --rail-idle: #3a4660;
+      --muted-on-hero: #b4bfd4;
+      --teal: var(--primary);
+      --teal-2: var(--primary-2);
+      --on-teal: var(--on-primary);
+      --blue: var(--primary);
+      --blue-2: var(--primary-2);
+      --amber-2: var(--tint-cream);
+      --green-2: var(--tint-green);
+      --card-shadow: none;
+    }
+
+    body { background: var(--page); }
+    .app { background: var(--surface-2); }
+    .eyebrow { border-color: var(--line); }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+    .time, .schedule-time, .exam-time { font-variant-numeric: tabular-nums; }
+
+    /* Başlık */
+    .brand { display: inline-flex; align-items: center; gap: 9px; font-size: 26px; font-weight: 800; letter-spacing: -.035em; }
+    .brand-mark { width: 30px; height: 30px; color: var(--primary); }
+    .brand-mark .icon { width: 30px; height: 30px; stroke-width: 2; }
+    .screen-subtitle { margin-top: 4px; font-size: var(--fs-body); }
+    .page-title { margin: var(--space-4) 0 var(--space-1); font-size: var(--fs-title); line-height: 1.1; letter-spacing: -.04em; overflow-wrap: anywhere; }
+    .page-lead { margin: 0 0 var(--space-4); color: var(--muted); font-size: var(--fs-body); }
+    .screen-title { font-size: clamp(24px, 7vw, var(--fs-title)); font-weight: 800; letter-spacing: -.04em; }
+    .section { margin-top: var(--space-5); }
+    .section-heading h2 { font-size: var(--fs-section); font-weight: 800; letter-spacing: -.03em; }
+    .text-button { color: var(--primary); font-size: 14px; }
+    .icon-button { border-radius: 50%; background: var(--primary-2); color: var(--ink); }
+    .icon-button:hover { background: var(--primary-2); filter: brightness(.97); }
+    .icon-button .unread-dot { background: var(--primary); border-color: var(--primary-2); }
+    .source-dot { background: var(--primary); }
+
+    /* Bölüm ve sınıf çipi */
+    .dept-chip {
+      max-width: 100%;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 44px;
+      margin: var(--space-2) 0 var(--space-1);
+      padding: 6px 12px 6px 14px;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: var(--primary-2);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+    }
+    .dept-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dept-chip .icon { width: 20px; height: 20px; color: var(--primary); }
+    .dept-chip .icon:last-child { color: var(--ink); width: 18px; height: 18px; }
+
+    /* Öne çıkan kart: açık mavi geçiş */
+    .hero-course, .feature-card, .details-hero {
+      border: 0;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--hero-a) 0%, var(--hero-a) 45%, var(--hero-b) 100%);
+      color: var(--ink);
+      box-shadow: none;
+    }
+    .hero-course .kicker { color: var(--primary); }
+    .hero-icon, .feature-card .feature-icon { background: var(--chip-on-tint); color: var(--primary); }
+    .hero-meta, .details-hero p { color: var(--ink); opacity: .82; }
+    /* Geçişin koyu ucunda --muted 4,16:1 kalıyordu (AA altı); öne çıkan kartlarda daha koyu ton. */
+    .hero-sub, .feature-card .feature-copy { color: var(--muted-on-hero); }
+    .hero-row > .icon:last-child, .feature-card > .icon:last-child, .info-card > .icon:last-child, .tile > .icon:last-child {
+      width: 38px; height: 38px; padding: 9px; border-radius: 50%; background: var(--chip-on-tint); color: var(--ink);
+    }
+    .feature-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--space-4);
+      min-height: 112px;
+      padding: var(--space-4) 18px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .feature-card .feature-icon { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; }
+    .feature-card .feature-icon .icon { width: 28px; height: 28px; }
+    .feature-title { display: block; font-size: 20px; font-weight: 800; letter-spacing: -.025em; overflow-wrap: anywhere; }
+    .feature-copy { display: block; margin-top: 5px; color: var(--muted); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+    .feature-card > span:nth-child(2) { min-width: 0; }
+
+    /* Zaman çizelgesi kartı */
+    .panel { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--card-shadow); }
+    .panel .timeline { gap: 0; }
+    .panel .timeline-row { grid-template-columns: 50px 14px minmax(0, 1fr); }
+    .panel .timeline-card { min-height: 70px; margin: 4px 0; border: 0; border-radius: 16px; background: transparent; box-shadow: none; }
+    .panel .timeline-row + .timeline-row .timeline-card { border-top: 1px solid var(--line); border-radius: 0; }
+    .panel .timeline-row.is-next .timeline-card { border-top-color: transparent; border-radius: 16px; background: var(--primary-2); }
+    .panel .timeline-row.is-next + .timeline-row .timeline-card { border-top-color: transparent; }
+    .timeline-title { font-size: 16px; font-weight: 750; }
+    .timeline-meta { font-size: var(--fs-meta); }
+    .time { padding-top: 16px; font-size: 13px; color: var(--muted); }
+    .rail::before { background: var(--line); }
+    .rail::after { background: var(--rail-idle); border-color: var(--surface); box-shadow: none; }
+    .timeline-row.is-next .rail::after { background: var(--primary); }
+    .timeline:not(.has-next) .timeline-row:first-child .rail::after { background: var(--primary); }
+    .timeline-card:hover { border-color: var(--line); }
+
+    /* Pastel kart ızgarası */
+    .tile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+    .tile {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto 1fr;
+      gap: var(--space-2) var(--space-2);
+      min-height: 0;
+      padding: var(--space-4);
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--tint-blue);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+    .tile .icon-tile { grid-column: 1; grid-row: 1; width: 46px; height: 46px; border-radius: 50%; background: var(--chip-on-tint); }
+    .tile > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; min-width: 0; align-self: start; }
+    .tile > .icon:last-child { grid-column: 2; grid-row: 1; align-self: start; width: 32px; height: 32px; padding: 7px; }
+    .tile-title { display: block; font-size: 16px; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .tile-copy { display: block; margin-top: 4px; color: var(--muted); font-size: var(--fs-meta); line-height: 1.4; overflow-wrap: anywhere; }
+    .tint-blue { background: var(--tint-blue); }
+    .tint-blue .icon-tile { color: var(--tint-blue-ink); }
+    .tint-violet { background: var(--tint-violet); }
+    .tint-violet .icon-tile { color: var(--tint-violet-ink); }
+    .tint-cream { background: var(--tint-cream); }
+    .tint-cream .icon-tile { color: var(--tint-cream-ink); }
+    .tint-green { background: var(--tint-green); }
+    .tint-green .icon-tile { color: var(--tint-green-ink); }
+    @media (max-width: 340px) { .tile-grid { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Bilgi ve liste kartları */
+    .timeline-card, .info-card, .list-card, .settings-card, .form-card { border-radius: var(--radius); }
+    .info-card { min-height: 92px; padding: var(--space-4); gap: var(--space-3); grid-template-columns: 52px minmax(0, 1fr) auto; }
+    .info-card .icon-tile, .list-card .icon-tile { width: 52px; height: 52px; border-radius: 50%; }
+    .info-card.menu { border-color: transparent; background: var(--tint-green); }
+    .info-card.menu .icon-tile { background: var(--chip-on-tint); color: var(--tint-green-ink); }
+    .info-card.deadline { border-color: transparent; background: var(--tint-blue); }
+    .info-card.deadline .icon-tile { background: var(--chip-on-tint); color: var(--tint-blue-ink); }
+    .info-card.announcement { border-color: transparent; background: var(--tint-cream); }
+    .info-card.announcement .icon-tile { background: var(--chip-on-tint); color: var(--tint-cream-ink); }
+    .info-card.tint-blue, .info-card.tint-violet, .info-card.tint-cream, .info-card.tint-green { border-color: transparent; }
+    .info-card[class*="tint-"] .icon-tile { background: var(--chip-on-tint); }
+    .card-title { font-size: var(--fs-card); font-weight: 800; letter-spacing: -.02em; }
+    .card-copy { font-size: 14px; }
+    .icon-tile { background: var(--primary-2); color: var(--primary); }
+    .list-title { font-size: 15px; }
+    .list-meta { font-size: var(--fs-small); }
+    .empty-state { border-radius: var(--radius-lg); }
+    .profile-card { border-color: transparent; background: var(--primary-2); }
+    .course-option { border-radius: 18px; }
+    .course-option.selected { border-color: color-mix(in srgb, var(--primary) 40%, transparent); background: var(--primary-2); }
+    [data-app-theme="dark"] .course-option.selected { background: var(--primary-2); }
+
+    /* Seçiciler */
+    .weekday-row { gap: var(--space-2); }
+    .weekday { min-height: 48px; border-radius: var(--radius-sm); background: var(--surface-3); color: var(--ink); font-size: 15px; font-weight: 600; }
+    .weekday.active { background: var(--primary); color: var(--on-primary); }
+    .segmented { gap: var(--space-2); padding: 0; background: transparent; }
+    .segment { min-height: 46px; border-radius: var(--radius-sm); background: var(--surface-3); color: var(--ink); font-size: 14px; font-weight: 600; }
+    .segment.active { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+    .chip.active { border-color: var(--primary); background: var(--primary-2); color: var(--primary); }
+    /* Gündem filtreleri: dar ekranda kesilmek yerine alt satıra geçer. */
+    .filter-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .filter-row .segment { flex: 1 1 auto; padding: 8px 10px; white-space: nowrap; }
+    @media (max-width: 360px) {
+      .filter-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .info-card { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 10px; padding: 14px; }
+      .info-card .icon-tile, .list-card .icon-tile { width: 42px; height: 42px; }
+      .feature-card { grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; padding: 14px; }
+      .feature-card .feature-icon { width: 52px; height: 52px; }
+      .page-title { font-size: 26px; }
+    }
+
+    /* Düğmeler */
+    .primary-button { border-color: var(--primary); background: var(--primary); color: var(--on-primary); box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 22%, transparent); }
+    .secondary-button { border-radius: var(--radius-sm); }
+
+    /* Ayarlar */
+    .settings-card { border-radius: var(--radius); }
+    .setting-row { min-height: 60px; padding: 8px var(--space-4); font-size: 15px; font-weight: 600; }
+    .setting-row .icon:first-child { color: var(--muted); }
+    .setting-row .setting-value { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-small); font-weight: 500; }
+    .independence-note { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-4); color: var(--muted); font-size: var(--fs-meta); }
+
+    /* Alt gezinme */
+    .bottom-nav { min-height: 84px; background: color-mix(in srgb, var(--surface) 96%, transparent); }
+    .nav-button { font-size: 12px; font-weight: 600; }
+    .nav-button.active { color: var(--primary); font-weight: 750; }
+    .nav-button.active .nav-icon-wrap { background: transparent; }
+    .nav-button.active .icon { stroke-width: 2.2; }
+    .map-pin { box-shadow: 0 7px 15px color-mix(in srgb, var(--primary) 30%, transparent); }
+    [data-app-theme="dark"] .status-bar, [data-app-theme="dark"] .bottom-nav, [data-app-theme="dark"] .sticky-action { background: color-mix(in srgb, var(--surface) 96%, transparent); }
+    [data-app-theme="dark"] .rail::before { background: var(--line); }
+    [data-app-theme="dark"] .info-card { background-image: none; }
   </style>
 </head>
 <body>
@@ -1540,6 +1841,7 @@
         </div>
 
         <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+          <symbol id="i-cap" viewBox="0 0 24 24"><path d="M2.5 9 12 4.5 21.5 9 12 13.5Z"/><path d="M6.5 11v4.6c0 1.6 2.5 3.1 5.5 3.1s5.5-1.5 5.5-3.1V11"/><path d="M21.5 9v5"/></symbol>
           <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V21h13V10.5"/><path d="M9.5 21v-6h5v6"/></symbol>
           <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 10h18"/></symbol>
           <symbol id="i-agenda" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
@@ -1938,7 +2240,7 @@
         selected: [],
         day: "Sal",
         courseFilter: "grade",
-        agenda: "announcements",
+        agenda: "all",
         dataMode: "fresh",
         theme: "system",
         themeChosen: false,
@@ -2172,7 +2474,8 @@
         }
         if (!copyEnum("route", STATE_ROUTES) || !copyEnum("previousRoute", STATE_ROUTES)) return null;
         if (!copyEnum("day", STATE_DAYS) || !copyEnum("courseFilter", ["grade", "all"])) return null;
-        if (!copyEnum("agenda", ["announcements", "calendar", "opportunities"])) return null;
+        // "opportunities" eski cihaz kayıtları için kalır (Fırsatlar sekmesi 2026-10-24'te kaldırıldı); "Tümü"ye çevrilir.
+        if (!copyEnum("agenda", ["all", "announcements", "dining", "calendar", "opportunities"])) return null;
         if (!copyEnum("dataMode", ["fresh", "offline", "stale"])) return null;
         if (!copyEnum("theme", ["system", "light", "dark"])) return null;
         if (!copyEnum("curriculumSemester", ["guz", "bahar"])) return null;
@@ -3128,9 +3431,9 @@
       function nav(active) {
         var items = [
           ["today", "home", "Bugün"],
-          ["program", "calendar", "Programım"],
+          ["program", "calendar", "Program"],
           ["agenda", "agenda", "Gündem"],
-          ["more", "more", "Daha fazla"]
+          ["more", "more", "Diğer"]
         ];
         return '<nav class="bottom-nav" aria-label="Ana gezinme">' + items.map(function (item) {
           return '<button class="nav-button ' + (active === item[0] ? "active" : "") + '" data-route="' + item[0] + '"' + (active === item[0] ? ' aria-current="page"' : "") + '><span class="nav-icon-wrap">' + icon(item[1]) + '</span><span>' + item[2] + '</span></button>';
@@ -3405,10 +3708,10 @@
           : near.length ? near.length + " derste bir oturum daha sınırı aşar · " + escapeHtml(near[0].name)
           : todayCount ? "Bugün " + todayCount + " dersin var · girmediğini tek dokunuşla işle"
           : "Devamsızlığını ders saati olarak tarihli tut";
-        return '<section class="section"><button class="info-card ' + (over.length || near.length ? "announcement" : "menu") + '" data-route="attendance">'
+        return '<button class="tile tint-cream" data-route="attendance">'
           + '<span class="icon-tile">' + icon(over.length || near.length ? "alert" : "clock") + '</span>'
-          + '<span><span class="card-title">Devamsızlığım</span><span class="card-copy">' + copy + '</span></span>'
-          + icon("chevron") + '</button></section>';
+          + '<span><span class="tile-title">Devamsızlık</span><span class="tile-copy">' + copy + '</span></span>'
+          + icon("chevron") + '</button>';
       }
 
       function renderAttendance() {
@@ -3628,10 +3931,10 @@
         } else {
           return "";
         }
-        return '<section class="section"><button class="info-card ' + (mine.length ? "deadline" : "menu") + '" data-route="exams">'
+        return '<button class="tile tint-violet" data-route="exams">'
           + '<span class="icon-tile">' + icon("calendar") + '</span>'
-          + '<span><span class="card-title">Ara sınavlarım</span><span class="card-copy">' + copy + '</span></span>'
-          + icon("chevron") + '</button></section>';
+          + '<span><span class="tile-title">Ara sınav</span><span class="tile-copy">' + copy + '</span></span>'
+          + icon("chevron") + '</button>';
       }
 
       function examCourseCard(course) {
@@ -3812,6 +4115,23 @@
         return new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
       }
 
+      /*
+       * Ana ekranların ortak üst bölümü (tasarım 2026-10-24): logo + ad, Türkiye tarihi, bildirim
+       * düğmesi. Bölüm çipi seçimi değiştirme ekranına gider (Diğer'deki "Düzenle" ile aynı yer).
+       */
+      function brandHeader() {
+        return '<div class="screen-header"><div><div class="brand"><span class="brand-mark">' + icon("cap") + '</span>ÜniKapsül</div>'
+          + '<div class="screen-subtitle">' + todayHeading() + '</div></div><div class="header-actions">'
+          + '<button class="icon-button" data-route="notifications" aria-label="Bildirimler">' + icon("bell")
+          + (!state.notificationsRead ? '<span class="unread-dot"></span>' : "") + '</button></div></div>';
+      }
+
+      function deptChip() {
+        var department = currentDepartment();
+        return '<button class="dept-chip" data-route="onboarding-1" aria-label="Bölüm ve sınıfı değiştir">' + icon("cap")
+          + '<span>' + escapeHtml(department.name) + ' · ' + escapeHtml(selectedGradeLabel()) + '</span>' + icon("chevron") + '</button>';
+      }
+
       function renderToday() {
         var department = currentDepartment();
         var plan = nextClassPlan();
@@ -3822,40 +4142,34 @@
         if (noSelection) {
           timeline = "";
         } else if (plan.list.length) {
-          timeline = '<h2>Bugünkü program</h2><button class="text-button" data-route="program">Tümünü gör</button></div><div class="timeline">' + plan.list.map(timelineRow).join("") + '</div>';
+          timeline = '<h2>Bugünkü program</h2><button class="text-button" data-route="program">Tümünü gör</button></div><div class="panel"><div class="timeline' + (plan.isToday ? ' has-next' : '') + '">' + plan.list.map(function (course) { return timelineRow(course, plan.isToday && next && course.id === next.id); }).join("") + '</div></div>';
         } else if (plan.nextList) {
           timeline = '<h2>' + escapeHtml(plan.when) + ' · ' + diningDateLabel(plan.nextIso) + '</h2><button class="text-button" data-route="program">Tümünü gör</button></div>'
             + '<p class="stepper-label" style="margin:0 0 8px">' + (plan.label.indexOf("HAFTA SONU") === 0 ? "Hafta sonu ders yok." : "Bugün seçtiğin derslerden hiçbiri yok.") + ' Ders olan bir sonraki gün:</p>'
-            + '<div class="timeline">' + plan.nextList.map(timelineRow).join("") + '</div>';
+            + '<div class="panel"><div class="timeline">' + plan.nextList.map(function (course) { return timelineRow(course, false); }).join("") + '</div></div>';
         } else {
           timeline = '<h2>Bugünkü program</h2></div>' + emptyProgramCard();
         }
         var html = ''
-          + '<div class="screen-header"><div><div class="brand">ÜniKapsül</div><div class="screen-subtitle">' + todayHeading() + '</div></div><div class="header-actions"><button class="icon-button" data-route="notifications" aria-label="Bildirimler">' + icon("bell") + (!state.notificationsRead ? '<span class="unread-dot"></span>' : "") + '</button></div></div>'
+          + brandHeader()
+          + deptChip()
           + '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>'
           + stateBanner()
           + (conflict ? '<button class="alert-card" data-route="program"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + escapeHtml(conflict.a.name) + ' ve ' + escapeHtml(conflict.b.name) + ' · ' + escapeHtml(conflict.start) + '–' + escapeHtml(conflict.end) + '</span></span>' + icon("chevron") + '</button>' : "")
           + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + ' · ' + escapeHtml(next.location) + '</span><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + escapeHtml(next.grade) + '. sınıf' + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
           + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
-          + examTodayCard()
-          + attendanceTodayCard()
-          + gradeTodayCard()
-          + '<section class="section"><div class="section-heading"><h2>Kampüs bugün</h2></div><div class="context-grid">'
-          + contextCard("menu", "utensils", "Günün menüsü", diningCardCopy(), "menu")
           + (function () {
-              var next = upcomingEvents(1)[0];
-              return next
-                ? contextCard("deadline", "calendar", next.title.length > 34 ? next.title.slice(0, 33) + "…" : next.title,
-                              eventDateLabel(next) + " · " + eventCountdown(next), "calendar")
-                : contextCard("deadline", "calendar", "Akademik takvim", "Yaklaşan kayıt yok", "calendar");
+              // Ara sınav ve devamsızlık yan yana pastel kartlar; yalnız biri varsa tek sütun.
+              var tiles = [examTodayCard(), attendanceTodayCard()].filter(Boolean);
+              return tiles.length ? '<section class="section"><div class="tile-grid"' + (tiles.length === 1 ? ' style="grid-template-columns:minmax(0,1fr)"' : '') + '>' + tiles.join("") + '</div></section>' : '';
             })()
-          + (team() ? contextCard("announcement", "database", "Veri kapsamı", recordStats().total + " aday kayıt · 0 yayımlanmış", "coverage") : "")
-          + '</div></section>';
+          + gradeTodayCard()
+          + (team() ? '<section class="section"><div class="context-grid">' + contextCard("announcement", "database", "Veri kapsamı", recordStats().total + " aday kayıt · 0 yayımlanmış", "coverage") + '</div></section>' : "");
         screen.innerHTML = layout(html, "today", false);
       }
 
-      function timelineRow(course) {
-        return '<div class="timeline-row"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + '</span><span class="timeline-meta">' + escapeHtml(course.location) + branchCopy(course) + '<br>' + escapeHtml(course.departmentName) + ' · ' + escapeHtml(course.grade) + '. sınıf</span></span>' + icon("chevron") + '</button></div>';
+      function timelineRow(course, isNext) {
+        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + '</span><span class="timeline-meta">' + escapeHtml(course.location) + branchCopy(course) + '<br>' + escapeHtml(course.departmentName) + ' · ' + escapeHtml(course.grade) + '. sınıf</span></span>' + icon("chevron") + '</button></div>';
       }
 
       function contextCard(className, iconName, title, copy, sheet) {
@@ -3884,6 +4198,40 @@
         return '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Henüz ders seçmedin</h3><p>Programını oluşturmak için ilk dersini ekle.</p><button class="primary-button" data-route="course-add">' + icon("plus") + ' Ders ekle</button></div>';
       }
 
+      /*
+       * Hafta özeti (tasarım 2026-10-24): içinde bulunulan haftanın Pazartesi–Cuma aralığı; hafta
+       * sonunda gelecek hafta. Sayılar yalnız öğrencinin seçtiği oturumlardan sayılır, uydurulmaz.
+       */
+      function weekSpan() {
+        var iso = turkeyDateIso();
+        var dow = new Date(iso + "T12:00:00Z").getUTCDay();
+        var monday = addDaysIso(iso, dow === 0 ? 1 : dow === 6 ? 2 : 1 - dow);
+        var friday = addDaysIso(monday, 4);
+        var a = diningDateLabel(monday), b = diningDateLabel(friday);
+        var label = monday.slice(0, 7) === friday.slice(0, 7) ? Number(monday.slice(8)) + "–" + b : a + " – " + b;
+        return { label: label, upcoming: dow === 0 || dow === 6 };
+      }
+
+      function weekSummaryCopy(span) {
+        var timed = selectedCourses().filter(function (course) { return course.day && course.start; });
+        var names = {};
+        timed.forEach(function (course) { names[course.name] = true; });
+        var count = Object.keys(names).length;
+        var head = span.upcoming ? "Gelecek hafta" : "Bu hafta";
+        if (!timed.length) return head + " · henüz ders seçmedin";
+        return head + " · " + count + " ders" + (timed.length !== count ? ", " + timed.length + " oturum" : "");
+      }
+
+      function programRow(course, isNext) {
+        var who = instructorCopy(course.instructor);
+        var meta = escapeHtml(course.location || "Derslik kaynakta yazmıyor") + branchCopy(course)
+          + (who && who !== "Belgede yazmıyor" && !course.userEntered ? "<br>" + escapeHtml(who) : "");
+        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span>'
+          + '<button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + programTag(course)
+          + (course.userEntered ? '<span class="own-chip">senin eklediğin</span>' : '') + '</span>'
+          + '<span class="timeline-meta">' + meta + '</span>' + attendanceBadge(course) + '</span>' + icon("chevron") + '</button></div>';
+      }
+
       function renderProgram() {
         var days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
         var department = currentDepartment();
@@ -3891,15 +4239,31 @@
         var dayCourses = selectedCourses().filter(function (course) { return course.day === state.day; }).sort(function (a, b) { return a.start.localeCompare(b.start); });
         var dayConflicts = conflicts().filter(function (item) { return item.a.day === state.day; });
         var conflict = dayConflicts[0];
+        var plan = nextClassPlan();
+        var nextId = plan.isToday && plan.course && plan.course.day === state.day ? plan.course.id : "";
+        var span = weekSpan();
         var html = ''
-          + '<div class="screen-header"><div><h1 class="screen-title">Programım</h1><p class="screen-subtitle">2026–2027 Güz · ' + escapeHtml(department.name) + (secondDepartment() ? ' + ' + escapeHtml(secondDepartment().name) + ' (' + escapeHtml(secondKindLabel()) + ')' : '') + '</p></div><button class="icon-button" data-sheet="program-tools" aria-label="Program araçları">' + icon("more") + '</button></div>'
+          + brandHeader()
+          + deptChip()
+          + '<h1 class="page-title">Ders programım</h1>'
+          + '<p class="page-lead">2026–2027 Güz' + (secondDepartment() ? ' · ' + escapeHtml(department.name) + ' + ' + escapeHtml(secondDepartment().name) + ' (' + escapeHtml(secondKindLabel()) + ')' : ' · Haftanı tek bakışta gör') + '</p>'
           + '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>'
           + stateBanner()
-          + (imported ? '<div class="weekday-row">' + days.map(function (day) { return '<button class="weekday ' + (state.day === day ? "active" : "") + '" data-day="' + day + '">' + day + '</button>'; }).join("") + '</div>' : '')
+          + (imported ? '<button class="feature-card" data-sheet="program-tools"><span class="feature-icon">' + icon("calendar") + '</span><span><span class="feature-title" style="color:var(--primary)">' + escapeHtml(span.label) + '</span><span class="feature-copy">' + escapeHtml(weekSummaryCopy(span)) + '</span></span>' + icon("chevron") + '</button>' : '')
+          + (imported ? '<section class="section"><div class="section-heading"><h2>Haftalık görünüm</h2><button class="text-button" data-route="course-add">Düzenle</button></div>'
+              + '<div class="weekday-row" style="margin-top:0">' + days.map(function (day) { return '<button class="weekday ' + (state.day === day ? "active" : "") + '" data-day="' + day + '">' + day + '</button>'; }).join("") + '</div>' : '')
           + (conflict ? '<button class="alert-card" data-sheet="conflict"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + conflict.start + '–' + conflict.end + (conflict.shared ? ' · aynı saat ve derslik' : ' saatleri arasında') + (dayConflicts.length > 1 ? ' · bu gün ' + dayConflicts.length + ' uyarı' : '') + '</span></span>' + icon("chevron") + '</button>' : "")
-          + (dayCourses.length ? '<div class="schedule-list">' + dayCourses.map(scheduleCourse).join("") + '</div>' : (imported ? '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span><h3>Bu güne ders eklenmemiş</h3><p>Bu, üniversitenin resmî ders kaydı değildir.</p></div>' : emptyProgramCard()))
+          + (dayCourses.length
+              ? '<div class="panel"><div class="timeline' + (nextId ? ' has-next' : '') + '">' + dayCourses.map(function (course) { return programRow(course, course.id === nextId); }).join("") + '</div></div>'
+              : (imported ? '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Bu güne ders eklenmemiş</h3><p>Seçtiğin derslerden bu güne düşen yok. Bu, üniversitenin resmî ders kaydı değildir.</p></div>' : emptyProgramCard()))
+          + (imported ? '</section>' : '')
           + (imported && state.selected.length ? '<button class="text-button grade-all" data-route="attendance">Tüm derslerimin devamsızlığı ' + icon("chevron") + '</button>' : '')
-          + (imported ? '<div class="button-row"><button class="primary-button" data-route="course-add">' + icon("plus") + ' Ders ekle</button><button class="secondary-button" data-route="course-add">Programı düzenle</button></div>' : '<div class="button-row"><button class="primary-button" data-sheet="source">Kaynak durumu</button><button class="secondary-button" data-route="onboarding-1">Programı değiştir</button></div>');
+          + (imported
+              ? '<section class="section"><div class="tile-grid">'
+                + '<button class="tile tint-violet" data-route="course-add"><span class="icon-tile">' + icon("plus") + '</span><span><span class="tile-title">Ders ekle</span><span class="tile-copy">Resmî listeden seç ya da kendin ekle</span></span>' + icon("chevron") + '</button>'
+                + '<button class="tile tint-cream" data-sheet="export"><span class="icon-tile">' + icon("download") + '</span><span><span class="tile-title">Takvime aktar</span><span class="tile-copy">Dersler haftalık tekrarla telefon takvimine (.ics)</span></span>' + icon("chevron") + '</button>'
+                + '</div></section>'
+              : '<div class="button-row"><button class="primary-button" data-sheet="source">Kaynak durumu</button><button class="secondary-button" data-route="onboarding-1">Programı değiştir</button></div>');
         screen.innerHTML = layout(html, "program", false);
       }
 
@@ -3914,11 +4278,37 @@
         return '<button class="schedule-course" data-course="' + escapeHtml(course.id) + '"><span class="schedule-time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span><span class="schedule-name">' + escapeHtml(course.name) + programTag(course) + '</span><span class="schedule-location">' + escapeHtml(course.location) + branchCopy(course) + ' · ' + escapeHtml(course.grade) + '. sınıf</span>' + attendanceBadge(course) + '</span>' + icon("chevron") + '</button>';
       }
 
+      /*
+       * Kampüs gündemi (tasarım 2026-10-24): Tümü / Duyurular / Yemekhane / Takvim. Her kart
+       * kaynağını ve durumunu söyler; duyuru izleyicisinin verisi uygulamaya yüklenmediği için
+       * "Duyurular" yalnız programını besleyen resmî belgeleri gösterir. Fırsatlar sekmesi boş bir
+       * "yakında" ekranıydı, kaldırıldı.
+       */
+      function agendaTab() {
+        return ["all", "announcements", "dining", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
+      }
+
+      function agendaCard(tint, iconName, title, copy, source, attr) {
+        return '<button class="info-card ' + tint + '" ' + attr + '><span class="icon-tile">' + icon(iconName) + '</span>'
+          + '<span><span class="card-title">' + escapeHtml(title) + '</span><span class="card-copy">' + escapeHtml(copy) + '</span>'
+          + (source ? '<span class="card-copy" style="font-size:12px">' + escapeHtml(source) + '</span>' : '') + '</span>'
+          + icon("chevron") + '</button>';
+      }
+
       function renderAgenda() {
+        var tab = agendaTab();
+        var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
+        var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["dining", "Yemekhane"], ["calendar", "Takvim"]];
         var html = ''
-          + '<div class="screen-header"><h1 class="screen-title">Gündem</h1><span></span></div>'
-          + '<div class="segmented"><button class="segment ' + (state.agenda === "announcements" ? "active" : "") + '" data-agenda="announcements">Duyurular</button><button class="segment ' + (state.agenda === "calendar" ? "active" : "") + '" data-agenda="calendar">Takvim</button><button class="segment ' + (state.agenda === "opportunities" ? "active" : "") + '" data-agenda="opportunities">Fırsatlar</button></div>'
-          + '<div style="margin-top:14px">' + agendaContent() + '</div>';
+          + brandHeader()
+          + '<h1 class="page-title">Kampüs gündemi</h1>'
+          + '<p class="page-lead">İhtiyacın olan bilgiler bir arada</p>'
+          + '<button class="feature-card" data-agenda="announcements"><span class="feature-icon">' + icon("megaphone") + '</span><span><span class="feature-title">Duyurular</span><span class="feature-copy">'
+          + (own ? 'Programını ilgilendiren ' + own + ' resmî belge' : 'Programın için okunmuş resmî belge yok') + '</span></span>' + icon("chevron") + '</button>'
+          + '<div class="filter-row" role="group" aria-label="Gündem filtresi" style="margin-top:16px">' + tabs.map(function (t) {
+              return '<button class="segment ' + (tab === t[0] ? "active" : "") + '" data-agenda="' + t[0] + '"' + (tab === t[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + '>' + t[1] + '</button>';
+            }).join("") + '</div>'
+          + '<div style="margin-top:16px">' + agendaContent() + '</div>';
         screen.innerHTML = layout(html, "agenda", false);
       }
 
@@ -3966,7 +4356,27 @@
       }
 
       function agendaContent() {
-        if (state.agenda === "calendar") {
+        var tab = agendaTab();
+        if (tab === "all") {
+          var next = upcomingEvents(1)[0];
+          var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
+          return '<section class="section" style="margin-top:8px"><div class="section-heading"><h2>Bugün</h2></div><div class="context-grid">'
+            + agendaCard("tint-cream", "utensils", "Yemekhane", diningCardCopy(), "Kaynak: NÖHÜ aylık yemek listesi · gözlem " + diningObservedLabel(), 'data-sheet="menu"')
+            + '</div></section>'
+            + '<section class="section"><div class="section-heading"><h2>Son güncellemeler</h2></div><div class="context-grid">'
+            + agendaCard("tint-violet", "calendar", "Akademik takvim",
+                next ? (next.title.length > 48 ? next.title.slice(0, 47) + "…" : next.title) + " · " + eventDateLabel(next) + " · " + eventCountdown(next) : "Yaklaşan kayıt yok",
+                "Kaynak: senato kararı · insan kontrolü bekliyor", 'data-agenda="calendar"')
+            + agendaCard("tint-blue", "megaphone", "Bölüm duyuruları",
+                own ? own + " resmî belge programını besliyor" : "Programın için okunmuş resmî belge yok",
+                "Yalnız üniversitenin kendi yayınından", 'data-agenda="announcements"')
+            + '</div></section>'
+            + '<div class="local-note">' + icon("info") + '<span>Bilgiler resmî kaynaklardan otomatik okunur ve insan kontrolü bekler; kesin bilgi için kaynağı aç.</span></div>';
+        }
+        if (tab === "dining") {
+          return '<div class="panel" style="padding:16px">' + diningMenuSheetHtml() + '</div>';
+        }
+        if (tab === "calendar") {
           var upcoming = upcomingEvents(12);
           if (!upcoming.length) {
             return '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span>'
@@ -3985,9 +4395,6 @@
             + '</div>'
             + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="calendar">Kaynak belgesi</button></div>';
         }
-        if (state.agenda === "opportunities") {
-          return '<div class="empty-state"><span class="icon-tile">' + icon("send") + '</span><h3>Fırsatlar yakında</h3><p>Veri sahibi ve doğrulama süreci kurulmadan burs, staj veya etkinlik ilanı gösterilmeyecek.</p><button class="secondary-button" data-sheet="agenda-sources">Kaynak politikasını gör</button></div>';
-        }
         var entries = announcementEntries().filter(function (entry) { return team() || entry.own; });
         if (!entries.length && !team()) {
           return '<div class="empty-state"><span class="icon-tile">' + icon("megaphone") + '</span><h3>Programın için resmî duyuru yok</h3><p>' + escapeHtml(currentDepartment().name) + ' için ders programı belgesi henüz okunmadı. Akademik tarihler Takvim sekmesinde.</p><button class="secondary-button" data-agenda="calendar">Takvimi aç</button></div>';
@@ -4002,34 +4409,55 @@
           + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="agenda-sources">Kaynak politikası</button>' + (team() ? '<button class="secondary-button" data-sheet="coverage">Veri kapsamı</button>' : '') + '</div>';
       }
 
+      /*
+       * Diğer (tasarım 2026-10-24; eski adı "Daha fazla"). Öne çıkan kart not ortalamasına, dört
+       * pastel kart çalışan araçlara gider; alt metinler cihazdaki gerçek durumdan sayılır.
+       * İletişim, düzeltme ve kaldırma satırları yasal güvenlik sözleşmesinin yayın kapısıdır (§5),
+       * kaldırılmaz.
+       */
       function renderMore() {
         var department = currentDepartment();
+        var graded = gradedCourses().filter(function (entry) { return entry.summary && entry.summary.scoredWeight; }).length;
+        var groups = absenceGroups().length;
+        var exams = myExams().length;
+        var deptExams = departmentExams(department.id).length;
+        var plan = curriculumPlan(department.id);
+        var tile = function (tint, iconName, title, copy, routeName) {
+          return '<button class="tile ' + tint + '" data-route="' + routeName + '"><span class="icon-tile">' + icon(iconName) + '</span>'
+            + '<span><span class="tile-title">' + title + '</span><span class="tile-copy">' + escapeHtml(copy) + '</span></span>' + icon("chevron") + '</button>';
+        };
         var html = ''
-          + '<div class="screen-header"><h1 class="screen-title">Daha fazla</h1><span></span></div>'
-          + '<div class="profile-card"><span class="icon-tile">' + icon(department.icon) + '</span><span><span class="profile-title">' + escapeHtml(department.name) + ' · ' + escapeHtml(selectedGradeLabel()) + '</span><span class="profile-meta">' + escapeHtml(currentFaculty().name) + ' · 2026–2027 Güz</span></span><button class="text-button" data-route="onboarding-1">Düzenle</button></div>'
-          + '<section class="section"><div class="settings-card">'
+          + brandHeader()
+          + '<h1 class="page-title">Diğer</h1>'
+          + '<p class="page-lead">Öğrenci araçları ve ayarlar</p>'
+          + '<button class="feature-card" data-route="grades"><span class="feature-icon">' + icon("agenda") + '</span><span><span class="feature-title">Not ortalaması</span><span class="feature-copy">'
+          + (graded ? graded + ' dersin notu girildi · ortalamanı gör' : 'Mevcut genel ortalamanı ve AKTS’ni gir, bu dönemi hesapla') + '</span></span>' + icon("chevron") + '</button>'
+          + '<section class="section"><div class="section-heading"><h2>Araçlarım</h2></div><div class="tile-grid">'
+          + tile("tint-cream", "clock", "Devamsızlık", groups ? groups + ' ders izleniyor' : 'Ders seçince ders bazında tut', "attendance")
+          + tile("tint-blue", "calendar", "Ara sınavlarım", exams ? exams + ' sınavın var' : (deptExams ? 'Bölüm programı yayımlandı' : 'Programın henüz yayımlanmadı'), "exams")
+          + tile("tint-green", "database", "Ders planı", plan ? 'Resmî Bilgi Paketi planı' : 'Programın planı henüz yok', "curriculum")
+          + tile("tint-violet", "map", "Kampüs rehberi", 'Birimleri ve binaları ara', "campus")
+          + '</div></section>'
+          + '<section class="section"><div class="section-heading"><h2>Tercihler</h2></div><div class="settings-card">'
+          + '<button class="setting-row" data-route="onboarding-1">' + icon("cap") + '<span>Bölüm ve sınıf<span class="setting-value">' + escapeHtml(department.name) + ' · ' + escapeHtml(selectedGradeLabel()) + '</span></span>' + icon("chevron") + '</button>'
           + settingRow("building", secondDepartment() ? escapeHtml(secondKindLabel()) + ": " + escapeHtml(secondDepartment().name) : "Çift ana dal / yan dal ekle", "", "second-program")
-          + settingRow("agenda", "Notlarım", "grades")
-          + settingRow("calendar", "Ara sınavlarım", "exams")
-          + settingRow("clock", "Devamsızlığım", "attendance")
-          + settingRow("database", "Ders planı", "curriculum")
-          + settingRow("map", "Kampüs rehberi", "campus")
           + settingRow("bell", "Bildirim tercihleri", "", "notifications")
           + settingRow("cloud", "Programı yedekle", "", "backup")
-          + settingRow("calendar", "Takvime aktar", "", "export")
-          + '</div></section>'
-          + '<section class="section"><div class="settings-card">'
+          + settingRow("download", "Takvime aktar", "", "export")
           + settingRow("palette", "Tema ve erişilebilirlik", "", "appearance")
+          + '</div></section>'
+          + '<section class="section"><div class="section-heading"><h2>Bilgi ve iletişim</h2></div><div class="settings-card">'
           + settingRow("database", team() ? "Veri kaynakları" : "Bilgiler nereden geliyor?", "", "coverage")
           + settingRow("alert", "Hatalı bilgi bildir", "", "report")
           + settingRow("shield", "Gizlilik ve yasal bilgiler", "", "privacy")
-          + settingRow("bell", "İletişim, düzeltme ve kaldırma", "", "contact")
+          + settingRow("send", "İletişim, düzeltme ve kaldırma", "", "contact")
           + '</div></section>'
           + (team() ? '<section class="section"><div class="section-heading"><h2>Ekip görünümü açık</h2></div><div class="settings-card">'
               + settingRow("alert", "Durum simülasyonu", "", "test")
               + '<button class="setting-row" data-action="team-off">' + icon("x") + '<span>Öğrenci görünümüne dön</span>' + icon("chevron") + '</button>'
               + '</div></section>' : '')
-          + '<div class="local-note">' + icon("info") + '<span>Hesap kullanılmıyor · Tercihler yalnızca bu cihazda saklanıyor.</span></div>';
+          + '<div class="local-note">' + icon("info") + '<span>Hesap kullanılmıyor · Tercihler yalnızca bu cihazda saklanıyor.</span></div>'
+          + '<p class="independence-note">' + icon("info") + '<span>Bağımsız öğrenci aracı · Niğde Ömer Halisdemir Üniversitesi’nin resmî uygulaması değildir.</span></p>';
         screen.innerHTML = layout(html, "more", false);
       }
 

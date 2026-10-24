@@ -11,7 +11,8 @@
  */
 "use strict";
 
-var CACHE = "unikapsul-v1";
+// v2 (2026-10-24): yeni tasarım katmanı ve yerel Inter yazı tipi; eski önbellek etkinleşmede silinir.
+var CACHE = "unikapsul-v2";
 var ASSETS = [
   "./",
   "index.html",
@@ -20,6 +21,8 @@ var ASSETS = [
   "icons/icon-512.png",
   "icons/maskable-512.png",
   "icons/apple-180.png",
+  "fonts/inter-latin.woff2",
+  "fonts/inter-latin-ext.woff2",
   "data/catalog.js",
   "data/offerings.js",
   "data/grading-rules.js",
