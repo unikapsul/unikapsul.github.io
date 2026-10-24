@@ -1915,6 +1915,7 @@
   <script src="data/curriculum.js"></script>
   <script src="data/exams.js"></script>
   <script src="data/activities.js"></script>
+  <script src="data/med-schedule.js"></script>
   <script>
     (function () {
       "use strict";
@@ -2202,12 +2203,12 @@
 
       // Öğrenci "aday kayıt" terimini bilmez; aynı durum sade dille söylenir.
       var STUDENT_STATUS_LABEL = {
-        candidate: "Kontrol bekliyor",
-        needs_review: "Belirsiz · kontrol bekliyor"
+        candidate: "Resmî programdan",
+        needs_review: "Teyit et"
       };
 
       function statusLabel(value) {
-        if (!state.teamView && STUDENT_STATUS_LABEL[value]) return STUDENT_STATUS_LABEL[value];
+        if (!team() && STUDENT_STATUS_LABEL[value]) return STUDENT_STATUS_LABEL[value];
         return STATUS_LABEL[value] || value || "Bilinmiyor";
       }
 
@@ -3366,13 +3367,14 @@
         if (department.gradeLabel) return [{ id: "1", name: department.gradeLabel }];
         var options = [];
         for (var grade = 1; grade <= department.years; grade += 1) {
-          options.push({ id: String(grade), name: grade + ". sınıf" });
+          options.push({ id: String(grade), name: department.id === medData.program ? "Dönem " + grade : grade + ". sınıf" });
         }
         return options;
       }
 
       function gradeLabelFor(department, grade) {
         if (department.stageLabels && department.stageLabels.length) return department.stageLabels[grade - 1] || department.stageLabels[0];
+        if (department.id === medData.program) return "Dönem " + grade;
         return department.gradeLabel || grade + ". sınıf";
       }
 
@@ -3385,6 +3387,7 @@
       }
 
       function gradeFieldLabel(department) {
+        if (department.id === medData.program) return "Dönem";
         return department.stageLabels && department.stageLabels.length ? "Program aşaması" : "Sınıf";
       }
 
@@ -3421,8 +3424,8 @@
         var item = department || currentDepartment();
         if (item.status === "no_students") return "Resmî kaynağa göre bu programa henüz öğrenci alınmadı · ders programı yok";
         if (!team()) return item.status === "candidate_rows"
-          ? "Ders saatleri resmî belgeden okundu; henüz bir insan tarafından kontrol edilmedi"
-          : "Bu programın ders programı henüz uygulamaya alınmadı";
+          ? "Ders saatleri bölümünün resmî ders programından"
+          : "Bu bölümün ders programı henüz eklenmedi";
         if (item.status === "candidate_rows") return "Aday ders satırları · ikinci kontrol bekliyor";
         if (item.status === "catalog_verified") return "Resmî AKTS program kaydı doğrulandı · ders çizelgesi aktarılmadı";
         if (item.status === "source_indexed") return "Resmî program kaynağı bulundu · aktarım bekliyor";
@@ -3620,7 +3623,7 @@
         if (state.dataMode === "offline") return "Çevrimdışı · son kayıt";
         if (state.dataMode === "stale") return "7 gün önce kontrol edildi";
         if (currentDepartment().status === "no_students") return "Henüz öğrenci alınmadı · resmî kaynak";
-        if (!team()) return currentDepartment().status === "candidate_rows" ? "Resmî belgeden · kontrol bekliyor" : "Ders programı henüz uygulamada yok";
+        if (!team()) return currentDepartment().status === "candidate_rows" ? "Bölümünün resmî ders programından" : "Ders programı henüz eklenmedi";
         if (currentDepartment().status === "candidate_rows") return "Aday ders verisi · kontrol bekliyor";
         if (currentDepartment().status === "catalog_verified") return "AKTS program kaydı doğrulandı · dersler bekliyor";
         if (currentDepartment().status === "source_indexed") return "Resmî kaynak bulundu · aktarım bekliyor";
@@ -3817,17 +3820,34 @@
       function renderOnboardingTwo() {
         var visible = filteredCourses();
         var imported = hasImportedRows();
+        // Bölümün bazı sınıfları yüklü, bu sınıf değil (ör. Diş Hekimliği'nde yalnız 3. sınıf):
+        // öğrenci takılmasın, programı derssiz kaydedebilsin.
+        var gradeMissing = imported && state.courseFilter === "grade" && !state.query.trim() && !visible.length;
+        if (medMode()) {
+          var medHas = medList().length > 0;
+          screen.innerHTML = '<div class="screen-layout"><div class="screen-scroll" style="padding-bottom:105px">'
+            + '<div class="screen-header"><button class="icon-button" data-route="onboarding-1" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Ders programın</h1><span style="width:44px"></span></div>'
+            + '<div class="progress"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span>2 / 2</span></div>'
+            + '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span><h3>' + (medHas ? 'Ders seçmen gerekmiyor' : 'Dönem ' + escapeHtml(String(state.grade)) + ' ders programı henüz eklenmedi') + '</h3>'
+            + '<p>' + (medHas ? 'Tıp ders kurulu programı tarihlidir: her günün dersi, saati ve öğretim üyesi kurul programından gelir.' : 'Eklendiğinde günlük programın burada olacak.') + '</p></div>'
+            + '</div><div class="sticky-action"><div class="selection-count"><strong>Dönem ' + escapeHtml(String(state.grade)) + '</strong><span>Tıp Fakültesi ders kurulu programı</span></div><button class="primary-button" data-action="finish-onboarding">Programı kaydet</button></div></div>';
+          return;
+        }
         var coursePicker = imported
           ? '<div class="search-wrap">' + icon("search") + '<input id="course-search" class="search-input" type="search" value="' + escapeHtml(state.query) + '" placeholder="Ders kodu veya adı ara" aria-label="Ders ara"></div>'
             + courseFilterChips()
             + '<div class="local-note">' + icon("info") + '<span>Alttan veya üstten aldığın dersleri de ekleyebilirsin.</span></div>'
-            + '<div class="list-stack" style="margin-top:12px">' + (visible.length ? courseGroupList(visible) : '<div class="empty-state"><h3>Bu filtrede ders yok</h3><p>' + allGradesLabel() + ' seçeneğini açabilir veya aramayı temizleyebilirsin.</p></div>') + '</div>'
-          : '<div class="empty-state"><span class="icon-tile">' + icon("database") + '</span><h3>Program seçime hazır</h3><p>Ders satırları henüz içe aktarılmadı. Kaynaksız veya tahminî ders gösterilmeyecek.</p><button class="secondary-button" data-sheet="source">Veri durumunu incele</button></div>';
+            + '<div class="list-stack" style="margin-top:12px">' + (visible.length ? courseGroupList(visible)
+              : gradeMissing ? '<div class="empty-state"><h3>' + escapeHtml(pickGradeLabel()) + ' ders programı henüz eklenmedi</h3><p>Eklendiğinde derslerini buradan seçebileceksin. Programını şimdi kaydedebilir, alttan veya üstten aldığın dersleri ' + allGradesLabel() + ' seçeneğinden ekleyebilirsin.</p></div>'
+              : '<div class="empty-state"><h3>Bu filtrede ders yok</h3><p>' + allGradesLabel() + ' seçeneğini açabilir veya aramayı temizleyebilirsin.</p></div>') + '</div>'
+          : (team()
+            ? '<div class="empty-state"><span class="icon-tile">' + icon("database") + '</span><h3>Program seçime hazır</h3><p>Ders satırları henüz içe aktarılmadı. Kaynaksız veya tahminî ders gösterilmeyecek.</p><button class="secondary-button" data-sheet="source">Veri durumunu incele</button></div>'
+            : '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span><h3>Ders programın henüz eklenmedi</h3><p>Bölümünü kaydedebilirsin; ders programı eklendiğinde derslerini buradan seçeceksin.</p><button class="secondary-button" data-sheet="source">Bölüm sayfasını aç</button></div>');
         var html = ''
           + '<div class="screen-header"><button class="icon-button" data-route="onboarding-1" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Derslerini seç</h1><span style="width:44px"></span></div>'
           + '<div class="progress"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div><span>2 / 2</span></div>'
           + coursePicker;
-        screen.innerHTML = '<div class="screen-layout"><div class="screen-scroll" style="padding-bottom:105px">' + html + '</div><div class="sticky-action"><div class="selection-count"><strong>' + (imported ? state.selected.length + ' ders seçildi' : 'Program seçildi') + '</strong><span>' + (imported ? (team() ? 'Aday veri · canlı değildir' : 'Resmî belgeden · kontrol bekliyor') : 'Ders verisi aktarım bekliyor') + '</span></div><button class="primary-button" data-action="finish-onboarding"' + (imported && !state.selected.length ? " disabled" : "") + '>' + (imported ? 'Programımı oluştur' : 'Programı kaydet') + '</button></div></div>';
+        screen.innerHTML = '<div class="screen-layout"><div class="screen-scroll" style="padding-bottom:105px">' + html + '</div><div class="sticky-action"><div class="selection-count"><strong>' + (imported && !gradeMissing ? state.selected.length + ' ders seçildi' : 'Program seçildi') + '</strong><span>' + (imported ? (team() ? 'Aday veri · canlı değildir' : 'Bölümünün resmî ders programından') : (team() ? 'Ders verisi aktarım bekliyor' : 'Ders programı henüz eklenmedi')) + '</span></div><button class="primary-button" data-action="finish-onboarding"' + (imported && !state.selected.length && !gradeMissing ? " disabled" : "") + '>' + (imported && !gradeMissing ? 'Programımı oluştur' : 'Programı kaydet') + '</button></div></div>';
       }
 
       function courseFilterChips() {
@@ -4273,6 +4293,104 @@
           .sort(function (a, b) { return a.start.localeCompare(b.start); });
       }
 
+      /*
+       * Tıp (2026-10-24, kullanıcı kararı): ders kurulu programı TARİHLİDİR — her günün konusu ve
+       * öğretim üyesi farklı, ders haftalık tekrarlamaz. Öğrenci ders seçmez; dönemini seçer, o günün
+       * oturumları gelir (data/med-schedule.js, tools/build-med-schedule.py). Devamsızlık ve not hesabı
+       * bu düzene henüz bağlı değil.
+       */
+      var medData = window.UNIKAPSUL_MED_SCHEDULE || { sessions: [], sources: {} };
+
+      function medMode() {
+        var d = currentDepartment();
+        return !!(d && d.id === medData.program && (medData.sessions || []).length);
+      }
+
+      function medList(date) {
+        var donem = Number(state.grade) || 1;
+        return (medData.sessions || []).filter(function (s) { return s.donem === donem && (!date || s.date === date); });
+      }
+
+      function medDates(from, limit) {
+        var seen = [];
+        medList().forEach(function (s) { if (s.date >= from && seen.indexOf(s.date) === -1) seen.push(s.date); });
+        return seen.sort().slice(0, limit || 99);
+      }
+
+      function medSourceNow() {
+        var donem = Number(state.grade) || 1, today = turkeyDateIso();
+        var list = Object.keys(medData.sources || {}).map(function (k) { return medData.sources[k]; })
+          .filter(function (src) { return src.donem === donem; })
+          .sort(function (a, b) { return String(b.last_date).localeCompare(String(a.last_date)); });
+        return list.find(function (src) { return src.first_date <= today && today <= src.last_date; }) || list[0] || null;
+      }
+
+      function medPlan() {
+        var today = turkeyDateIso(), now = turkeyClock();
+        var list = medList(today);
+        var running = list.find(function (s) { return s.start <= now && now < s.end; });
+        if (running) return { session: running, label: "ŞU AN DEVAM EDEN", list: list, date: today, isToday: true };
+        var upcoming = list.find(function (s) { return s.start > now; });
+        if (upcoming) return { session: upcoming, label: "SIRADAKİ DERS", list: list, date: today, isToday: true };
+        var next = medDates(addDaysIso(today, 1), 1)[0];
+        if (!next) return { session: null, label: "", list: list, date: today, isToday: true };
+        var nextList = medList(next);
+        var reason = list.length ? "BUGÜNKÜ DERSLERİN BİTTİ" : (isoWeekday(today) ? "BUGÜN DERSİN YOK" : "HAFTA SONU");
+        return { session: nextList[0], label: reason + " · " + (next === addDaysIso(today, 1) ? "YARIN" : diningDateLabel(next).toLocaleUpperCase("tr-TR")) + " İLK DERS",
+                 list: list, nextList: nextList, date: next, isToday: false };
+      }
+
+      function medRow(s, isNext) {
+        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(s.start) + '<br>' + escapeHtml(s.end) + '</span><span class="rail"></span>'
+          + '<div class="timeline-card"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(s.title) + confirmChip(s) + '</span>'
+          + '<span class="timeline-meta">' + escapeHtml([s.code, s.instructor].filter(Boolean).join(" · ") || (s.kind === "sinav" ? "Sınav" : "")) + '</span></span></div></div>';
+      }
+
+      function medDayHeading(iso) {
+        return dayLong(isoWeekday(iso) || "") + " · " + diningDateLabel(iso);
+      }
+
+      function medEmptyCopy() {
+        var src = medSourceNow(), today = turkeyDateIso();
+        if (!src) return "Dönem " + (Number(state.grade) || 1) + " ders programı henüz eklenmedi.";
+        if (src.last_date < today) return "Dönem " + src.donem + " için eklenen son kurul " + diningDateLabel(src.last_date) + " tarihinde bitti; sıradaki kurulun programı yayımlandığında burada olacak.";
+        return "Önümüzdeki günlerde ders yok.";
+      }
+
+      function renderMedToday() {
+        var plan = medPlan();
+        var s = plan.session;
+        var src = medSourceNow();
+        var html = brandHeader() + deptChip()
+          + (s ? '<div class="hero-course" style="cursor:default"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(currentDepartment().icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(s.title) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(medDayHeading(plan.date)) + ' · ') + escapeHtml(s.start) + '–' + escapeHtml(s.end) + '</span><span class="hero-sub">' + escapeHtml([s.code, s.instructor].filter(Boolean).join(" · ")) + '</span></span></div></div>'
+              : '<div class="empty-state" style="min-height:160px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Yaklaşan ders yok</h3><p>' + escapeHtml(medEmptyCopy()) + '</p></div>');
+        var list = plan.isToday ? plan.list : (plan.nextList || []);
+        if (list.length) {
+          html += '<section class="section"><div class="section-heading"><h2>' + (plan.isToday ? 'Bugünkü program' : escapeHtml(medDayHeading(plan.date))) + '</h2><button class="text-button" data-route="program">Tümünü gör</button></div>'
+            + (plan.isToday ? '' : '<p class="stepper-label" style="margin:0 0 8px">' + (isoWeekday(turkeyDateIso()) ? 'Bugün ders yok.' : 'Hafta sonu ders yok.') + ' Ders olan bir sonraki gün:</p>')
+            + '<div class="panel"><div class="timeline' + (plan.isToday ? ' has-next' : '') + '">' + list.map(function (x) { return medRow(x, plan.isToday && s && x.id === s.id); }).join("") + '</div></div></section>';
+        }
+        if (src) html += '<p class="stepper-label" style="margin:8px 0 0">Dönem ' + src.donem + ' · ' + escapeHtml(src.kurul_name || src.kurul_code) + ' (' + escapeHtml(diningDateLabel(src.first_date)) + ' – ' + escapeHtml(diningDateLabel(src.last_date)) + ')</p>';
+        html += todayDiningCard() + gradeTodayCard();
+        screen.innerHTML = layout(html, "today", false);
+      }
+
+      function renderMedProgram() {
+        var today = turkeyDateIso();
+        var dates = medDates(today, 7);
+        var src = medSourceNow();
+        var html = brandHeader() + deptChip()
+          + '<h1 class="page-title">Ders programım</h1>'
+          + '<p class="page-lead">Dönem ' + (Number(state.grade) || 1) + (src ? ' · ' + escapeHtml(src.kurul_name || src.kurul_code) : '') + '</p>'
+          + (dates.length ? dates.map(function (d) {
+              return '<section class="section"><div class="section-heading"><h2>' + escapeHtml(medDayHeading(d)) + (d === today ? ' · bugün' : '') + '</h2></div>'
+                + '<div class="panel"><div class="timeline">' + medList(d).map(function (x) { return medRow(x, false); }).join("") + '</div></div></section>';
+            }).join("")
+            : '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Yaklaşan ders yok</h3><p>' + escapeHtml(medEmptyCopy()) + '</p></div>')
+          + (src ? '<div class="button-row" style="margin-top:12px"><a class="secondary-button" href="' + escapeHtml(safeOfficialUrl(src.document_url)) + '" target="_blank" rel="noopener noreferrer">Kurul programını aç</a></div>' : '');
+        screen.innerHTML = layout(html, "program", false);
+      }
+
       function nextClassPlan() {
         var todayIso = turkeyDateIso();
         var today = isoWeekday(todayIso);
@@ -4320,6 +4438,7 @@
       }
 
       function renderToday() {
+        if (medMode()) { renderMedToday(); return; }
         var department = currentDepartment();
         var plan = nextClassPlan();
         var next = plan.course;
@@ -4407,7 +4526,15 @@
       function emptyProgramCard() {
         if (currentDepartment().status === "no_students") return noStudentsCard();
         if (!hasImportedRows()) {
+          if (!team()) {
+            return '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Ders programın henüz eklenmedi</h3><p>Bölümünün ders programı eklendiğinde derslerini buradan seçebileceksin. O zamana kadar resmî programı bölüm sayfasından görebilirsin.</p><button class="secondary-button" data-sheet="source">Bölüm sayfasını aç</button></div>';
+          }
           return '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("database") + '</span><h3>Ders programı aktarım bekliyor</h3><p>' + statusCopy() + '. Tahminî ders gösterilmiyor.</p><button class="secondary-button" data-sheet="source">Resmî kaynağı incele</button></div>';
+        }
+        var dep = currentDepartment();
+        var gradeRows = coursesFor(dep).some(function (c) { return c.stage || c.grade === state.grade; });
+        if (!gradeRows) {
+          return '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>' + escapeHtml(gradeLabelFor(dep, state.grade)) + ' ders programı henüz eklenmedi</h3><p>Eklendiğinde derslerini seçebileceksin. Alttan veya üstten aldığın dersleri şimdi de ekleyebilirsin.</p><button class="secondary-button" data-route="course-add">' + icon("plus") + ' Ders ekle</button></div>';
         }
         return '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Henüz ders seçmedin</h3><p>Programını oluşturmak için ilk dersini ekle.</p><button class="primary-button" data-route="course-add">' + icon("plus") + ' Ders ekle</button></div>';
       }
@@ -4447,6 +4574,7 @@
       }
 
       function renderProgram() {
+        if (medMode()) { renderMedProgram(); return; }
         var days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
         var department = currentDepartment();
         var imported = hasImportedRows();
@@ -5612,6 +5740,12 @@
         var plan = curriculumPlan(department.id);
         var html = '<div class="screen-header"><button class="icon-button" data-route="more" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Ders planı</h1><span style="width:44px"></span></div>';
 
+        if (!plan && !team()) {
+          html += '<div class="empty-state"><span class="icon-tile">' + icon("agenda") + '</span><h3>Ders planı henüz eklenmedi</h3>'
+            + '<p>' + escapeHtml(department.name) + ' programının ders planı eklendiğinde burada görünecek.</p></div>';
+          screen.innerHTML = layout(html, "", true);
+          return;
+        }
         if (!plan) {
           html += '<div class="empty-state"><h3>' + escapeHtml(department.name) + ' için ders planı arşivlenmedi</h3>'
             + '<p>Bilgi Paketi\'nde bu programın ders planı sayfası bulunamadı. Arşivlenmiş program sayısı: '
@@ -5778,7 +5912,7 @@
           title = team() ? "Veri ayrıntısı" : "Resmî kaynak";
           body = !team()
             ? '<div class="sheet-copy"><p><strong>' + escapeHtml(department.name) + '</strong></p><p>Ders programı ve duyurular bölümünün resmî sayfasında yayımlanır.</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">Bölüm sayfasını aç</a>'
-            : '<div class="sheet-copy"><p><strong>Program:</strong> ' + escapeHtml(department.name) + '</p><p><strong>Durum:</strong> ' + escapeHtml(statusCopy(department)) + '.</p>' + (team() ? '<p><strong>Katalog kontrolü:</strong> ' + escapeHtml(department.observedAt) + '</p>' : '') + '<p>' + (team() ? 'Ders satırları yalnızca kaynak ve insan kontrolü tamamlanınca öğrenciye kesin veri olarak sunulacaktır.' : 'Kontrol tamamlanana kadar saat ve dersliği resmî belgeyle karşılaştırman önerilir.') + '</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">NÖHÜ kaynağını aç</a>';
+            : '<div class="sheet-copy"><p><strong>Program:</strong> ' + escapeHtml(department.name) + '</p><p><strong>Durum:</strong> ' + escapeHtml(statusCopy(department)) + '.</p>' + (team() ? '<p><strong>Katalog kontrolü:</strong> ' + escapeHtml(department.observedAt) + '</p>' : '') + '<p>' + (team() ? 'Ders satırları yalnızca kaynak ve insan kontrolü tamamlanınca öğrenciye kesin veri olarak sunulacaktır.' : 'Değişiklik olursa bölümünün yayımladığı belge geçerlidir.') + '</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">NÖHÜ kaynağını aç</a>';
         } else if (type === "exam") {
           title = "Ara sınav";
           body = examSheetHtml((examData.exams || []).find(function (e) { return e.exam_id === state.examId; }));
@@ -5805,10 +5939,10 @@
               + '<p><strong>Düzey:</strong> ' + escapeHtml(cp.degreeLabel || cp.studyLevel || "belirtilmemiş")
               + (cp.years ? ' · ' + cp.years + ' yıl' : "") + '</p>'
               + '<p><strong>Ders programı:</strong> ' + (cpRows.length
-                  ? (team() ? cpRows.length + ' aday kayıt · kaynak ' + Object.keys(cpSourceIds).join(", ") : 'var · resmî belgeden, kontrol bekliyor')
-                  : (cp.status === "no_students" ? 'yok — resmî kaynağa göre programa henüz öğrenci alınmadı' : (team() ? 'yok — 2026-2027 Güz için güvenli tekil kaynak belgesi henüz çözülmedi' : 'henüz yok — resmî belgesi okunmadı'))) + '</p>'
+                  ? (team() ? cpRows.length + ' aday kayıt · kaynak ' + Object.keys(cpSourceIds).join(", ") : 'var · bölümün resmî ders programından')
+                  : (cp.status === "no_students" ? 'yok — resmî kaynağa göre programa henüz öğrenci alınmadı' : (team() ? 'yok — 2026-2027 Güz için güvenli tekil kaynak belgesi henüz çözülmedi' : 'henüz eklenmedi'))) + '</p>'
               + (team() ? '<p><strong>Katalog kontrolü:</strong> ' + escapeHtml(isoDateLabel(cp.observedAt) || cp.observedAt || "bilinmiyor") + '</p>' : '')
-              + '<p>Bu kayıt program kataloğundandır; bina adresi ve konum resmî kaynakla doğrulanmadan yayımlanmaz.</p></div>';
+              + (team() ? '<p>Bu kayıt program kataloğundandır; bina adresi ve konum resmî kaynakla doğrulanmadan yayımlanmaz.</p>' : '') + '</div>';
             var cpUrl = safeOfficialUrl(cp.sourceUrl || cp.directoryUrl || (cpUnit && cpUnit.directoryUrl));
             if (cpUrl) {
               body += '<a class="primary-button" style="width:100%" href="' + escapeHtml(cpUrl) + '" target="_blank" rel="noopener noreferrer">Resmî sayfayı aç</a>';
@@ -6379,7 +6513,7 @@
           state.route = "today";
           persist();
           render();
-          toast(hasImportedRows() ? "Örnek program oluşturuldu." : "Program tercihi kaydedildi; ders verisi bekleniyor.");
+          toast(state.selected.length ? "Programın oluşturuldu." : "Bölümün kaydedildi.");
         }
         if (action === "mark-read") {
           state.notificationsRead = true;
