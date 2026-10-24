@@ -3220,10 +3220,15 @@
        * belgede yazdığı biçimde gelir. Kişiye göre arama ya da listeleme değildir
        * (legal-safety-contract.md §3): seçim yalnız bu cihazda, yalnız ders listesini süzer.
        */
-      var ADVISOR_COURSES = ["ÖZEL KONULAR", "DANIŞMANLIK"];
+      // Coğrafya YL (2026-10-23): "Ders Danışmanlığı" ve "Tez Çalışması" da danışman başına blok.
+      // Uzmanlık Alan Dersi: doktorada Özel Konular'ın karşılığı, danışman başına açılır (EBE doktora belgeleri).
+      var ADVISOR_COURSES = ["ÖZEL KONULAR", "DANIŞMANLIK", "DERS DANIŞMANLIĞI", "TEZ ÇALIŞMASI", "TEZ DANIŞMANLIĞI", "ÖĞRENCİ DANIŞMANLIĞI", "UZMANLIK ALAN DERSİ", "UZMANLIK ALANI"];
 
       function isAdvisorCourse(course) {
-        return ADVISOR_COURSES.indexOf(String(course.name || "").toLocaleUpperCase("tr-TR").replace(/\s+/g, " ").trim()) !== -1;
+        // "YL Ders Danışmanlığı", "Özel Konular I" (Müzikoloji YL): önek ve sondaki Roma rakamı yok sayılır.
+        var name = String(course.name || "").toLocaleUpperCase("tr-TR").replace(/\s+/g, " ").trim()
+          .replace(/^YL\s+/, "").replace(/(?:\s+|-)(?:[IVX]+|\d)$/, "");
+        return ADVISOR_COURSES.indexOf(name) !== -1;
       }
 
       function advisorNames(course) {
@@ -3259,8 +3264,8 @@
           + names.map(function (n) { return '<option value="' + escapeHtml(n) + '"' + (n === mine ? ' selected' : '') + '>' + escapeHtml(n) + '</option>'; }).join("")
           + '</select>' + icon("chevron") + '</div>'
           + '<p class="group-note">' + icon("info") + '<span>' + (mine
-              ? 'Özel Konular ve Danışmanlık’ta yalnız danışmanının saatleri gösteriliyor. Adlar ders programı belgesinde yazdığı gibidir; seçimin yalnız bu cihazda kalır.'
-              : 'Özel Konular ve Danışmanlık her danışmanın kendi saatidir. Danışmanını seçersen yalnız onun saatleri görünür.') + '</span></p></div>';
+              ? 'Özel Konular, danışmanlık ve tez çalışmasında yalnız danışmanının saatleri gösteriliyor. Adlar ders programı belgesinde yazdığı gibidir; seçimin yalnız bu cihazda kalır.'
+              : 'Özel Konular, danışmanlık ve tez çalışması saatleri her danışmanın kendi saatidir. Danışmanını seçersen yalnız onun saatleri görünür.') + '</span></p></div>';
       }
 
       function sessionsOf(key) {
