@@ -1251,8 +1251,26 @@
     .absence-log { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
     .absence-log li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; border-bottom: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
     .absence-log li span { min-width: 0; }
+    .absence-log .text-button { white-space: nowrap; flex: 0 0 auto; }
     .absence-limit { margin: 12px 0 8px; color: var(--muted); font-size: 12px; line-height: 1.45; }
     .absence-limit strong { color: var(--ink); }
+    .absence-part { display: grid; gap: 2px; margin: 4px 0 6px; }
+    .absence-part-title { margin: 6px 0 0; font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--muted); }
+    .absence-part-copy { margin: 0; font-size: 13px; font-weight: 600; }
+    .absence-part-copy.near { color: var(--amber); }
+    .absence-part-copy.over { color: var(--red); }
+    .absence-bar.near span { background: var(--amber); }
+    .absence-bar.over span { background: var(--red); }
+    .absence-snap { margin: 0 0 4px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .absence-snap .text-button { min-height: 32px; padding: 0 4px; }
+    .absence-empty { margin: 4px 0 10px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    ul.absence-sessions { list-style: none; padding: 0; }
+    ul.absence-sessions li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
+    ul.absence-sessions .chip { min-height: 32px; }
+    .absence-log li.included span { color: var(--muted); }
+    .absence-week { display: flex; align-items: flex-start; }
+    .absence-week-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .absence-week-actions button { width: auto; }
     .absence-limit-row { display: grid; gap: 8px; }
     .absence-limit-input { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
     .attendance-note {
@@ -1779,7 +1797,8 @@
     .filter-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .filter-row .segment { flex: 1 1 auto; padding: 8px 10px; white-space: nowrap; }
     @media (max-width: 360px) {
-      .filter-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filter-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .filter-row .segment { padding: 8px 4px; font-size: 13px; }
       .info-card { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 10px; padding: 14px; }
       .info-card .icon-tile, .list-card .icon-tile { width: 42px; height: 42px; }
       .feature-card { grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; padding: 14px; }
@@ -1895,6 +1914,7 @@
   <script src="data/academic-calendar.js"></script>
   <script src="data/curriculum.js"></script>
   <script src="data/exams.js"></script>
+  <script src="data/activities.js"></script>
   <script>
     (function () {
       "use strict";
@@ -2273,6 +2293,9 @@
         second: { department: "", grade: 1, kind: "cap" },
         pickProgram: "main",
         // Lisansüstü: öğrencinin kendi seçtiği danışman, program başına ({ bölümKimliği: "ad" }).
+        // Haftalık devamsızlık kontrolü: cevaplanan haftanın Pazartesi'si ve "Sonra" denen gün.
+        absenceWeekly: "",
+        absenceSnooze: "",
         advisors: {}
       };
 
@@ -2478,7 +2501,7 @@
         if (!copyEnum("route", STATE_ROUTES) || !copyEnum("previousRoute", STATE_ROUTES)) return null;
         if (!copyEnum("day", STATE_DAYS) || !copyEnum("courseFilter", ["grade", "all"])) return null;
         // "opportunities" eski cihaz kayıtları için kalır (Fırsatlar sekmesi 2026-10-24'te kaldırıldı); "Tümü"ye çevrilir.
-        if (!copyEnum("agenda", ["all", "announcements", "dining", "calendar", "opportunities"])) return null;
+        if (!copyEnum("agenda", ["all", "announcements", "events", "dining", "calendar", "opportunities"])) return null;
         if (!copyEnum("dataMode", ["fresh", "offline", "stale"])) return null;
         if (!copyEnum("theme", ["system", "light", "dark"])) return null;
         if (!copyEnum("curriculumSemester", ["guz", "bahar"])) return null;
@@ -2498,7 +2521,7 @@
           if (!Number.isInteger(secondGrade) || secondGrade < 1 || secondGrade > secondMax) secondGrade = 1;
           clean.second = { department: secondId, grade: secondGrade, kind: secondKind };
         }
-        if (!["query", "detailCourse", "campusQuery", "campusFilter", "campusProgram", "announcementSource", "calendarEvent", "curriculumGrade"].every(function (key) {
+        if (!["query", "detailCourse", "campusQuery", "campusFilter", "campusProgram", "announcementSource", "calendarEvent", "curriculumGrade", "absenceWeekly", "absenceSnooze"].every(function (key) {
           return copyText(key, 240);
         })) return null;
 
@@ -2917,11 +2940,38 @@
         return courseGroupKey(course.departmentId, course.code, course.name);
       }
 
+      /*
+       * Ders başına devamsızlık kaydı (2026-10-24 düzeni):
+       *   entries   — öğrencinin işlediği kaçırılan oturumlar (tarihli)
+       *   kinds     — oturum başına teorik/uygulama seçimi ({ oturumKimliği: "uygulama" })
+       *   limits    — izlencedeki sınır, tür başına ({ teorik: 12 })
+       *   snapshots — otomasyondan bakıp girdiği toplam, tür başına ({ teorik: { hours, asOf } })
+       * Eski kayıttaki ders düzeyi `kind`/`limit` bir kez bu alanlara taşınır.
+       */
+      function normalizeAbsenceRecord(record) {
+        if (!Array.isArray(record.entries)) record.entries = [];
+        if (!plainRecord(record.kinds)) record.kinds = {};
+        if (!plainRecord(record.limits)) record.limits = {};
+        if (!plainRecord(record.snapshots)) record.snapshots = {};
+        if (record.kind === "teorik" || record.kind === "uygulama") { record.legacyKind = record.kind; }
+        record.kind = null;
+        if (record.limit != null) {
+          var k = record.legacyKind || "teorik";
+          if (record.limits[k] == null) record.limits[k] = record.limit;
+          record.limit = null;
+        }
+        return record;
+      }
+
+      function plainRecord(value) {
+        return !!value && typeof value === "object" && !Array.isArray(value);
+      }
+
       function absenceRecord(key, create) {
         if (!state.absences) state.absences = {};
         var record = state.absences[key];
-        if (!record && create) record = state.absences[key] = { entries: [], kind: null, limit: null };
-        return record || { entries: [], kind: null, limit: null };
+        if (!record && create) record = state.absences[key] = { entries: [] };
+        return normalizeAbsenceRecord(record || { entries: [] });
       }
 
       function isoWeekday(iso) {
@@ -2954,6 +3004,51 @@
         return count;
       }
 
+      function sessionKind(record, session) {
+        var chosen = record.kinds[session.id];
+        if (chosen === "teorik" || chosen === "uygulama") return chosen;
+        if (session.kind === "laboratuvar" || session.kind === "uygulama") return "uygulama";
+        return record.legacyKind || "teorik";
+      }
+
+      /*
+       * Teorik ve uygulama oturumları ayrı sınırla sayılır (Madde 17 iki oran veriyor; önceden bir
+       * laboratuvar oturumu bütün dersi %20'ye çekiyordu). Kullanılan = otomasyon değeri (varsa) +
+       * o tarihten SONRAKİ kayıtlar; önceki kayıtlar değere dahil sayılır, iki kez sayılmaz.
+       * İşlenmemiş oturum katılmış sayılmaz: ekran "kayıtlarına göre" der.
+       */
+      function absenceParts(group, record, term) {
+        var kinds = group.graduate ? ["teorik"] : ["teorik", "uygulama"];
+        var parts = kinds.map(function (kind) {
+          var sessions = group.sessions.filter(function (s) { return group.graduate || sessionKind(record, s) === kind; });
+          return { kind: kind, sessions: sessions, ids: sessions.map(function (s) { return s.id; }) };
+        }).filter(function (part) { return part.sessions.length; });
+        if (!parts.length) parts = [{ kind: "teorik", sessions: group.sessions, ids: group.sessions.map(function (s) { return s.id; }) }];
+        parts.forEach(function (part, index) {
+          var snap = record.snapshots[part.kind];
+          part.snapshot = snap && Number.isFinite(snap.hours) && /^\d{4}-\d{2}-\d{2}$/.test(snap.asOf || "") ? snap : null;
+          part.entries = record.entries.filter(function (e) {
+            // Artık seçili olmayan oturumun kaydı ilk bölümde sayılır; kayıt kaybolmaz.
+            return part.ids.indexOf(e.sessionId) !== -1 || (index === 0 && !parts.some(function (p) { return p.ids.indexOf(e.sessionId) !== -1; }));
+          });
+          // Kayda alan yazılmaz (cihazda saklanır); dahil olanlar ayrı listede tutulur.
+          part.included = {};
+          part.entries.forEach(function (e) { if (part.snapshot && (!e.date || e.date <= part.snapshot.asOf)) part.included[e.id] = true; });
+          part.used = (part.snapshot ? part.snapshot.hours : 0) + part.entries.reduce(function (sum, e) { return sum + (part.included[e.id] ? 0 : (e.hours || 0)); }, 0);
+          part.termHours = term ? part.sessions.reduce(function (sum, s) { return sum + sessionHours(s) * teachingDays(s.day, term); }, 0) : 0;
+          part.rate = part.kind === "uygulama" ? 20 : 30;
+          part.estimate = !group.graduate && part.termHours ? Math.floor(part.termHours * part.rate / 100) : null;
+          part.limit = record.limits[part.kind] != null ? record.limits[part.kind] : part.estimate;
+          part.limitSource = record.limits[part.kind] != null ? "user" : (part.estimate != null ? "estimate" : "none");
+          part.maxSession = part.sessions.reduce(function (m, s) { return Math.max(m, sessionHours(s)); }, 0) || 1;
+          part.left = part.limit == null ? null : part.limit - part.used;
+          // Kaç oturum daha: en uzun oturum üzerinden, aşağı — tam oturum kaçırılır, kesir değil.
+          part.canMiss = part.left == null || part.left < 0 ? null : Math.floor(part.left / part.maxSession);
+          part.level = absenceLevel(part);
+        });
+        return parts;
+      }
+
       function absenceGroups() {
         var term = teachingTerm();
         var map = {};
@@ -2966,6 +3061,7 @@
           }
           map[key].sessions.push(course);
         });
+        var rank = { over: 0, near: 1, ok: 2, none: 3 };
         return order.map(function (key) {
           var group = map[key];
           group.sessions.sort(function (a, b) {
@@ -2973,15 +3069,10 @@
           });
           var record = absenceRecord(key, false);
           group.record = record;
-          group.kind = record.kind || (group.sessions.some(function (s) { return s.kind === "laboratuvar" || s.kind === "uygulama"; }) ? "uygulama" : "teorik");
-          group.weeklyHours = group.sessions.reduce(function (sum, s) { return sum + sessionHours(s); }, 0);
-          group.used = record.entries.reduce(function (sum, e) { return sum + (e.hours || 0); }, 0);
-          group.termHours = term ? group.sessions.reduce(function (sum, s) { return sum + sessionHours(s) * teachingDays(s.day, term); }, 0) : 0;
-          group.rate = group.kind === "uygulama" ? 20 : 30;
-          group.estimate = !group.graduate && group.termHours ? Math.floor(group.termHours * group.rate / 100) : null;
-          group.limit = record.limit != null ? record.limit : group.estimate;
-          group.limitSource = record.limit != null ? "user" : (group.estimate != null ? "estimate" : "none");
-          group.level = absenceLevel(group);
+          group.parts = absenceParts(group, record, term);
+          group.used = group.parts.reduce(function (sum, p) { return sum + p.used; }, 0);
+          group.hasRecords = record.entries.length > 0 || group.parts.some(function (p) { return p.snapshot; });
+          group.level = group.parts.reduce(function (worst, p) { return rank[p.level] < rank[worst] ? p.level : worst; }, "none");
           return group;
         });
       }
@@ -2996,20 +3087,26 @@
        * sınıra EŞİT devamsızlık hâlâ izinlidir, AŞAN devamsızdır.
        * "near": bir sonraki kaçırılan oturum sınırı aşar.
        */
-      function absenceLevel(group) {
-        if (group.limit == null) return "none";
-        if (group.used > group.limit) return "over";
-        var maxSession = group.sessions.reduce(function (m, s) { return Math.max(m, sessionHours(s)); }, 0) || 1;
-        if (group.limit - group.used < maxSession) return "near";
+      function absenceLevel(part) {
+        if (part.limit == null) return "none";
+        if (part.used > part.limit) return "over";
+        if (part.limit - part.used < part.maxSession) return "near";
         return "ok";
       }
 
+      function kindLabel(kind) { return kind === "uygulama" ? "Uygulama" : "Teorik"; }
+
+      function partCopy(part) {
+        if (part.limit == null) return "Kayıtlarına göre " + part.used + " ders saati · sınırı izlencenden gir";
+        if (part.left < 0) return "Kayıtlarına göre sınırı " + (-part.left) + " saat aşmış olabilirsin";
+        if (part.canMiss === 0) return part.left === 0 ? "Sınırdasın · bir ders daha kaçırırsan sınırı aşarsın" : part.left + " saat kaldı · bir ders daha sınırı aşar";
+        return part.canMiss + " ders daha kaçırabilirsin · " + part.left + " saat kaldı";
+      }
+
       function absenceCopy(group) {
-        if (group.limit == null) return group.used + " ders saati devamsızlık · sınır bilinmiyor";
-        var left = group.limit - group.used;
-        if (left < 0) return "Sınırı " + (-left) + " saat aştın · " + group.used + "/" + group.limit + " saat";
-        if (group.level === "near") return left === 0 ? "Sınırdasın · bir oturum daha devamsız sayılmana yeter" : left + " saat kaldı · bir oturum daha sınırı aşar";
-        return left + " ders saati hakkın kaldı · " + group.used + "/" + group.limit;
+        if (group.parts.length === 1) return partCopy(group.parts[0]);
+        var worst = group.parts.slice().sort(function (a, b) { return ({ over: 0, near: 1, ok: 2, none: 3 })[a.level] - ({ over: 0, near: 1, ok: 2, none: 3 })[b.level]; })[0];
+        return kindLabel(worst.kind) + ": " + partCopy(worst);
       }
 
       function addAbsence(key, sessionId, iso) {
@@ -3027,6 +3124,21 @@
         record.entries.push({ id: "a" + Date.now().toString(36) + Math.floor(Math.random() * 1e4), date: iso, sessionId: sessionId, hours: sessionHours(session) || 1 });
         record.entries.sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
         return "";
+      }
+
+      function setAbsenceSnapshot(key, kind, hoursRaw, iso) {
+        if (kind !== "teorik" && kind !== "uygulama") return "Tür seç.";
+        var hours = Number(String(hoursRaw).trim());
+        if (String(hoursRaw).trim() === "" || !Number.isInteger(hours) || hours < 0 || hours > 200) return "Ders saatini tam sayı olarak yaz (0–200).";
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return "Tarih seç.";
+        if (iso > turkeyDateIso()) return "Gelecek bir tarih seçilemez.";
+        absenceRecord(key, true).snapshots[kind] = { hours: hours, asOf: iso };
+        return "";
+      }
+
+      function weekMonday(iso) {
+        var dow = new Date(iso + "T12:00:00Z").getUTCDay();
+        return addDaysIso(iso, dow === 0 ? -6 : 1 - dow);
       }
 
       function removeAbsence(key, entryId) {
@@ -3071,27 +3183,42 @@
         return entry.date ? diningDateLabel(entry.date) + " " + dayLong(isoWeekday(entry.date)) : "Tarihsiz (eski sürümden)";
       }
 
-      function absenceProgress(group) {
-        if (group.limit == null || !group.limit) return "";
-        var pct = Math.min(100, Math.round(group.used / group.limit * 100));
-        return '<div class="absence-bar" role="img" aria-label="' + group.used + ' / ' + group.limit + ' ders saati"><span style="width:' + pct + '%"></span></div>';
+      function absenceProgress(part) {
+        if (part.limit == null || !part.limit) return "";
+        var pct = Math.min(100, Math.round(part.used / part.limit * 100));
+        return '<div class="absence-bar ' + part.level + '" role="img" aria-label="' + part.used + ' / ' + part.limit + ' ders saati"><span style="width:' + pct + '%"></span></div>';
       }
 
-      function absenceLimitCopy(group) {
-        if (group.limitSource === "user") {
-          return 'Sınır: <strong>' + group.limit + ' ders saati</strong> · senin girdiğin (izlence)'
-            + (group.estimate != null && team() ? ' · yönetmelikten tahmin ' + group.estimate : '');
+      function absenceLimitCopy(group, part) {
+        if (part.limitSource === "user") {
+          return 'Sınır: <strong>' + part.limit + ' ders saati</strong> · senin girdiğin (izlence)'
+            + (part.estimate != null && team() ? ' · yönetmelikten tahmin ' + part.estimate : '');
         }
-        if (group.limitSource === "estimate" && !team()) {
-          return 'Tahmini sınır: <strong>' + group.estimate + ' ders saati</strong>';
+        if (part.limitSource === "estimate" && !team()) {
+          return 'Tahmini sınır: <strong>' + part.estimate + ' ders saati</strong>';
         }
-        if (group.limitSource === "estimate") {
-          return 'Sınır: <strong>' + group.estimate + ' ders saati · tahmini</strong> — ' + group.weeklyHours + ' saat/hafta, dönemde ' + group.termHours
-            + ' saat, %' + group.rate + ' (' + (group.kind === "uygulama" ? "uygulama" : "teorik") + ', ' + REGULATION_ARTICLE + ').';
+        if (part.limitSource === "estimate") {
+          return 'Sınır: <strong>' + part.estimate + ' ders saati · tahmini</strong> — dönemde ' + part.termHours
+            + ' saat, %' + part.rate + ' (' + kindLabel(part.kind).toLocaleLowerCase("tr-TR") + ', ' + REGULATION_ARTICLE + ').';
         }
         return group.graduate
           ? (team() ? 'Lisansüstü yönetmeliği devam oranı yazmıyor; sınır tahmin edilmedi. İzlencedeki sınırı gir.' : 'Devamsızlık sınırını izlencenden girebilirsin.')
           : (team() ? 'Dönem aralığı ya da ders saati bilinmediği için sınır tahmin edilemedi. İzlencedeki sınırı gir.' : 'Devamsızlık sınırını izlencenden girebilirsin.');
+      }
+
+      function absencePartBlock(group, part, full) {
+        var keyAttr = escapeHtml(group.key);
+        var multi = group.parts.length > 1;
+        var snap = part.snapshot;
+        return '<div class="absence-part">'
+          + (multi ? '<p class="absence-part-title">' + kindLabel(part.kind) + ' · %' + part.rate + '</p>' : '')
+          + (multi || full ? '<p class="absence-part-copy ' + part.level + '">' + escapeHtml(partCopy(part)) + '</p>' : '')
+          + absenceProgress(part)
+          + (snap ? '<p class="absence-snap">Otomasyondan girdiğin: <strong>' + snap.hours + ' saat</strong> · ' + escapeHtml(diningDateLabel(snap.asOf)) + ' itibarıyla. Sonraki kayıtların üstüne eklenir.'
+              + (full ? ' <button class="text-button" data-absence-snap-del="' + keyAttr + '::' + part.kind + '">Kaldır</button>' : '') + '</p>' : '')
+          + (full ? '<p class="absence-limit">' + absenceLimitCopy(group, part) + '</p>'
+              + '<label class="absence-limit-input"><span>' + (multi ? kindLabel(part.kind) + ' · i' : 'İ') + 'zlencedeki sınır (saat)</span><input class="search-input" type="number" inputmode="numeric" min="0" max="200" data-absence-limit="' + keyAttr + '::' + part.kind + '" value="' + (group.record.limits[part.kind] != null ? group.record.limits[part.kind] : "") + '" placeholder="' + (part.estimate != null ? "Boşsa tahmin: " + part.estimate : "Örn. 12") + '"></label>' : '')
+          + '</div>';
       }
 
       function absenceCard(group, index, full) {
@@ -3099,20 +3226,26 @@
         var todayDay = isoWeekday(today);
         var keyAttr = escapeHtml(group.key);
         var todaySessions = group.sessions.filter(function (s) { return s.day === todayDay && sessionHours(s); });
+        var included = {};
+        group.parts.forEach(function (p) { Object.keys(p.included).forEach(function (id) { included[id] = true; }); });
         var html = '<div class="attendance-card ' + group.level + '" data-absence-card="' + index + '">'
-          + '<p class="attendance-status" style="margin-bottom:2px">' + (full ? escapeHtml(group.name) : absenceCopy(group)) + '</p>'
-          + (full ? '<p class="stepper-label" style="margin:0 0 6px">' + (group.code ? escapeHtml(group.code) + ' · ' : '') + absenceCopy(group) + '</p>' : '')
-          + absenceProgress(group)
-          + '<p class="absence-sessions">' + group.sessions.map(function (s) {
-              return escapeHtml(s.day || "Gün yok") + ' ' + escapeHtml(s.start || "") + (s.end ? '–' + escapeHtml(s.end) : '') + ' · ' + (sessionHours(s) ? sessionHours(s) + ' saat' : 'saat yok');
-            }).join('<br>') + '</p>'
+          + '<p class="attendance-status" style="margin-bottom:2px">' + (full ? escapeHtml(group.name) : escapeHtml(absenceCopy(group))) + '</p>'
+          + (full && group.code ? '<p class="stepper-label" style="margin:0 0 6px">' + escapeHtml(group.code) + '</p>' : '')
+          + group.parts.map(function (part) { return absencePartBlock(group, part, full); }).join("")
+          + (!group.hasRecords ? '<p class="absence-empty">Henüz kayıt yok. Kaçırdığın dersleri işledikçe ya da otomasyondaki değeri girdiğinde hesap güncellenir; işlenmeyen ders katılmış sayılmaz.</p>' : '')
+          + '<ul class="absence-sessions">' + group.sessions.map(function (s) {
+              var kind = sessionKind(group.record, s);
+              return '<li><span>' + escapeHtml(s.day || "Gün yok") + ' ' + escapeHtml(s.start || "") + (s.end ? '–' + escapeHtml(s.end) : '') + ' · ' + (sessionHours(s) ? sessionHours(s) + ' ders saati' : 'saat yok') + '</span>'
+                + (full && !group.graduate ? '<button class="chip' + (kind === "uygulama" ? ' active' : '') + '" data-absence-skind="' + keyAttr + '::' + escapeHtml(s.id) + '" aria-label="Oturum türü: ' + kindLabel(kind) + '. Değiştirmek için dokun.">' + kindLabel(kind) + '</button>' : '')
+                + '</li>';
+            }).join('') + '</ul>'
           + todaySessions.map(function (s) {
               var done = group.record.entries.some(function (e) { return e.sessionId === s.id && e.date === today; });
               return done
-                ? '<p class="absence-done">' + icon("check") + 'Bugünkü ' + escapeHtml(s.start) + ' oturumu işlendi (' + sessionHours(s) + ' saat)</p>'
-                : '<button class="secondary-button absence-today" data-absence-add="' + keyAttr + '::' + s.id + '::' + today + '">Bugünkü ' + escapeHtml(s.start) + ' dersine girmedim · ' + sessionHours(s) + ' saat</button>';
+                ? '<p class="absence-done">' + icon("check") + 'Bugünkü ' + escapeHtml(s.start) + ' dersi işlendi (' + sessionHours(s) + ' ders saati)</p>'
+                : '<button class="secondary-button absence-today" data-absence-add="' + keyAttr + '::' + s.id + '::' + today + '">Bugünkü ' + escapeHtml(s.start) + ' dersine girmedim · ' + sessionHours(s) + ' ders saati</button>';
             }).join("")
-          + '<details class="absence-more"><summary>Geçmiş bir tarihi ekle</summary>'
+          + '<details class="absence-more"><summary>Kaçırdığın geçmiş bir dersi ekle</summary>'
           + '<div class="absence-form">'
           + (group.sessions.length > 1
               ? '<select class="select" data-absence-session aria-label="Oturum">' + group.sessions.map(function (s) {
@@ -3122,20 +3255,22 @@
           + '<input class="search-input" type="date" data-absence-date aria-label="Tarih" max="' + today + '" value="' + lastOccurrence(group.sessions[0].day) + '">'
           + '<button class="primary-button" data-absence-past="' + keyAttr + '">Ekle</button>'
           + '</div></details>'
+          + (full ? '<details class="absence-more"><summary>Otomasyondaki devamsızlığını gir</summary>'
+              + '<div class="absence-form">'
+              + '<p class="stepper-label" style="margin:0">Öğrenci bilgi sisteminde bu ders için görünen toplam devamsızlığı yaz. Bu tarihten önceki kayıtların bu değere dahil sayılır, iki kez sayılmaz.</p>'
+              + (group.parts.length > 1 ? '<select class="select" data-absence-snap-kind aria-label="Tür">' + group.parts.map(function (p) { return '<option value="' + p.kind + '">' + kindLabel(p.kind) + '</option>'; }).join("") + '</select>' : '<input type="hidden" data-absence-snap-kind value="' + group.parts[0].kind + '">')
+              + '<input class="search-input" type="number" inputmode="numeric" min="0" max="200" data-absence-snap-hours aria-label="Ders saati" placeholder="Ders saati, örn. 6">'
+              + '<input class="search-input" type="date" data-absence-snap-date aria-label="Hangi tarih itibarıyla" max="' + today + '" value="' + today + '">'
+              + '<button class="primary-button" data-absence-snap="' + keyAttr + '">Kaydet</button>'
+              + '</div></details>' : '')
           + (group.record.entries.length
               ? '<ul class="absence-log">' + group.record.entries.map(function (e) {
                   var s = group.sessions.find(function (x) { return x.id === e.sessionId; });
-                  return '<li><span>' + absenceDateLabel(e) + (s ? ' · ' + escapeHtml(s.start || "") : '') + ' · ' + e.hours + ' saat</span>'
+                  return '<li' + (included[e.id] ? ' class="included"' : '') + '><span>' + absenceDateLabel(e) + (s ? ' · ' + escapeHtml(s.start || "") : '') + ' · ' + e.hours + ' saat' + (included[e.id] ? ' · otomasyon değerine dahil' : '') + '</span>'
                     + '<button class="text-button" data-absence-undo="' + keyAttr + '::' + e.id + '" aria-label="Bu kaydı sil">Geri al</button></li>';
                 }).join("") + '</ul>'
-              : '<p class="stepper-label" style="margin:8px 0 0">Henüz devamsızlık işlemedin.</p>')
-          + '<p class="absence-limit">' + absenceLimitCopy(group) + '</p>'
-          + '<div class="absence-limit-row">'
-          + (!group.graduate ? '<div class="chips" role="group" aria-label="Ders türü">'
-              + '<button class="chip ' + (group.kind === "teorik" ? "active" : "") + '" data-absence-kind="' + keyAttr + '::teorik">Teorik %30</button>'
-              + '<button class="chip ' + (group.kind === "uygulama" ? "active" : "") + '" data-absence-kind="' + keyAttr + '::uygulama">Uygulama %20</button></div>' : '')
-          + '<label class="absence-limit-input"><span>İzlencedeki sınır (saat)</span><input class="search-input" type="number" inputmode="numeric" min="0" max="200" data-absence-limit="' + keyAttr + '" value="' + (group.record.limit != null ? group.record.limit : "") + '" placeholder="' + (group.estimate != null ? "Boşsa tahmin: " + group.estimate : "Örn. 12") + '"></label>'
-          + '</div>'
+              : '')
+          + (!full && group.parts.length === 1 ? '<p class="absence-limit">' + absenceLimitCopy(group, group.parts[0]) + '</p>' : '')
           + '</div>';
         return html;
       }
@@ -3728,14 +3863,39 @@
         var near = groups.filter(function (g) { return g.level === "near"; });
         var todayDay = todayShortDay();
         var todayCount = groups.filter(function (g) { return g.sessions.some(function (s) { return s.day === todayDay; }); }).length;
-        var copy = over.length ? over.length + " derste tahmini sınırı aştın · " + escapeHtml(over[0].name)
-          : near.length ? near.length + " derste bir oturum daha sınırı aşar · " + escapeHtml(near[0].name)
+        var copy = over.length ? over.length + " derste sınırı aşmış olabilirsin · " + escapeHtml(over[0].name)
+          : near.length ? near.length + " derste bir ders daha sınırı aşar · " + escapeHtml(near[0].name)
           : todayCount ? "Bugün " + todayCount + " dersin var · girmediğini tek dokunuşla işle"
           : "Devamsızlığını ders saati olarak tarihli tut";
         return '<button class="tile tint-cream" data-route="attendance">'
           + '<span class="icon-tile">' + icon(over.length || near.length ? "alert" : "clock") + '</span>'
           + '<span><span class="tile-title">Devamsızlık</span><span class="tile-copy">' + copy + '</span></span>'
           + icon("chevron") + '</button>';
+      }
+
+      /*
+       * Haftalık kontrol (2026-10-24): Cuma–Pazar, öğretim aralığında, o hafta cevaplanmadıysa
+       * Bugün'de tek soru. Bildirim değil: izin istemez, cevap yalnız bu cihazda tutulur.
+       */
+      function weeklyAbsenceCheck() {
+        var today = turkeyDateIso();
+        var dow = new Date(today + "T12:00:00Z").getUTCDay();
+        if ([5, 6, 0].indexOf(dow) === -1) return "";
+        var term = teachingTerm();
+        if (!term || today < term.start || addDaysIso(today, -4) > term.end) return "";
+        var monday = weekMonday(today);
+        if (inGap(term, monday) && inGap(term, addDaysIso(monday, 4))) return "";
+        if (state.absenceWeekly === monday || state.absenceSnooze === today) return "";
+        if (!absenceGroups().length) return "";
+        return '<section class="section"><div class="info-card tint-cream absence-week">'
+          + '<span class="icon-tile">' + icon("clock") + '</span>'
+          + '<span><span class="card-title">Bu hafta kaçırdığın ders var mı?</span>'
+          + '<span class="card-copy">Kaçırdıklarını işlersen kalan hakkını doğru hesaplarım.</span>'
+          + '<span class="absence-week-actions">'
+          + '<button class="secondary-button" data-absence-week="none">Yok, kontrol ettim</button>'
+          + '<button class="primary-button" data-absence-week="yes">Evet, ders seç</button>'
+          + '<button class="text-button" data-absence-week="later">Sonra</button>'
+          + '</span></span></div></section>';
       }
 
       function renderAttendance() {
@@ -4028,7 +4188,9 @@
         // yayımlanıyor; öğrenciye en yeni duyuru tek satır olarak gösterilir.
         var formasyon = (examData.unparsed || []).filter(function (u) { return !u.department_ids.length && /formasyon/i.test(u.title); })
           .sort(function (a, b) { return String(b.published_at).localeCompare(String(a.published_at)); });
-        if (formasyon.length) others = others.concat(team() ? formasyon : [formasyon[0]]);
+        // Formasyon belgesi bölüme özel değil (department_ids boş); kullanıcı 2026-10-24: bölümle
+        // ilgisi olmayan belge öğrenciye eklenmez. Ekip görünümünde ve yönetim panelinde kalır.
+        if (formasyon.length && team()) others = others.concat(formasyon);
         if (others.length) {
           html += '<section class="section"><details class="gpa-details"><summary><span>' + (team() ? 'Uygulamaya henüz eklenmeyen belgeler' : 'Diğer sınav duyuruları') + '</span><span class="gpa-sub">' + others.length + (team() ? ' belge · resmî sayfada açılır' : ' duyuru') + '</span></summary><div class="gpa-details-body"><div class="list-stack">'
             + others.map(function (u) {
@@ -4184,6 +4346,7 @@
           + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
           + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
           + todayDiningCard()
+          + weeklyAbsenceCheck()
           + (function () {
               // Ara sınav ve devamsızlık yan yana pastel kartlar; yalnız biri varsa tek sütun.
               var tiles = [examTodayCard(), attendanceTodayCard()].filter(Boolean);
@@ -4321,7 +4484,7 @@
       function attendanceBadge(course) {
         var group = groupOf(course);
         if (!group || (group.level !== "near" && group.level !== "over")) return "";
-        var text = group.level === "over" ? "Devamsızlık sınırı aşıldı" : "Devamsızlıkta son oturum";
+        var text = group.level === "over" ? "Devamsızlık sınırı aşılmış olabilir" : "Devamsızlıkta son ders";
         return '<span class="attendance-badge ' + group.level + '">' + icon("alert") + text + '</span>';
       }
 
@@ -4336,7 +4499,7 @@
        * "yakında" ekranıydı, kaldırıldı.
        */
       function agendaTab() {
-        return ["all", "announcements", "dining", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
+        return ["all", "announcements", "events", "dining", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
       }
 
       function agendaCard(tint, iconName, title, copy, source, attr) {
@@ -4349,7 +4512,7 @@
       function renderAgenda() {
         var tab = agendaTab();
         var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
-        var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["dining", "Yemekhane"], ["calendar", "Takvim"]];
+        var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["events", "Etkinlikler"], ["dining", "Yemekhane"], ["calendar", "Takvim"]];
         var html = ''
           + brandHeader()
           + '<h1 class="page-title">Kampüs gündemi</h1>'
@@ -4406,6 +4569,41 @@
           + icon("chevron") + '</button>';
       }
 
+      /*
+       * Etkinlikler (2026-10-24, kullanıcı kararı "düşük iz"): E-Genç'te NÖHÜ Genç Ofis'in
+       * düzenlediği, bugünden sonra biten faaliyetler (tools/nohu/fetch_egenc_activities.py).
+       * Bağlantı yalnız E-Genç'in faaliyet sayfasına açılır.
+       */
+      var activityData = window.UNIKAPSUL_ACTIVITIES || { activities: [] };
+
+      function upcomingActivities() {
+        var today = turkeyDateIso();
+        return (activityData.activities || []).filter(function (a) { return (a.end || a.start) >= today; });
+      }
+
+      function activityTitle(value) {
+        return String(value || "").split(/\s+/).map(function (word) {
+          // Rakam ya da ünlü içermeyen kelime kısaltmadır (A2, TFFHGD): olduğu gibi kalır.
+          if (/\d/.test(word) || !/[AEIİOÖUÜaeıioöuü]/.test(word)) return word;
+          var lower = word.toLocaleLowerCase("tr-TR");
+          return lower.charAt(0).toLocaleUpperCase("tr-TR") + lower.slice(1);
+        }).join(" ");
+      }
+
+      function activityDateLabel(a) {
+        if (!a.start) return "";
+        return !a.end || a.end === a.start ? isoDateLabel(a.start) : diningDateLabel(a.start) + " – " + isoDateLabel(a.end);
+      }
+
+      function safeActivityUrl(value) {
+        try {
+          var url = new URL(value);
+          if (url.protocol === "https:" && url.hostname === "e-genc.gsb.gov.tr" && !url.username && !url.password && !url.port
+              && url.pathname === "/Faaliyet/FaaliyetDetay") return url.href;
+        } catch (error) {}
+        return "https://e-genc.gsb.gov.tr/Faaliyet";
+      }
+
       function agendaContent() {
         var tab = agendaTab();
         if (tab === "all") {
@@ -4418,6 +4616,11 @@
             + agendaCard("tint-violet", "calendar", "Akademik takvim",
                 next ? (next.title.length > 48 ? next.title.slice(0, 47) + "…" : next.title) + " · " + eventDateLabel(next) + " · " + eventCountdown(next) : "Yaklaşan kayıt yok",
                 team() ? "Kaynak: senato kararı · insan kontrolü bekliyor" : "", 'data-agenda="calendar"')
+            + (function () {
+                var nextActivity = upcomingActivities()[0];
+                return agendaCard("tint-green", "calendar", "Etkinlikler",
+                  nextActivity ? activityTitle(nextActivity.title) + " · " + activityDateLabel(nextActivity) : "Yaklaşan etkinlik yok", "", 'data-agenda="events"');
+              })()
             + agendaCard("tint-blue", "megaphone", "Bölüm duyuruları",
                 team() ? (own ? own + " resmî belge programını besliyor" : "Programın için okunmuş resmî belge yok") : (own ? "Bölümünün ders programı duyurusu" : "Henüz duyuru yok"),
                 "", 'data-agenda="announcements"')
@@ -4426,6 +4629,20 @@
         }
         if (tab === "dining") {
           return '<div class="panel" style="padding:16px">' + diningMenuSheetHtml() + '</div>';
+        }
+        if (tab === "events") {
+          var acts = upcomingActivities();
+          var head = '<p class="sheet-copy">NÖHÜ Genç Ofis’in E-Genç’te duyurduğu faaliyetler. Başvuru ve ayrıntı E-Genç’te.</p>';
+          if (!acts.length) {
+            return head + '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span><h3>Yaklaşan etkinlik yok</h3><p>Yeni faaliyet duyurulduğunda burada görünecek.</p></div>';
+          }
+          return head + '<div class="list-stack" style="margin-top:10px">' + acts.map(function (a) {
+              var meta = [activityDateLabel(a), a.address && a.address.length < 60 ? activityTitle(a.address) : "", a.age ? a.age + " yaş" : ""].filter(Boolean).join(" · ");
+              return '<a class="list-card" href="' + escapeHtml(safeActivityUrl(a.url)) + '" target="_blank" rel="noopener noreferrer">'
+                + '<span class="icon-tile">' + icon("calendar") + '</span><span><span class="list-title">' + escapeHtml(activityTitle(a.title)) + '</span>'
+                + '<span class="list-meta">' + escapeHtml(meta) + '</span></span>' + icon("chevron") + '</a>';
+            }).join("") + '</div>'
+            + (activityData.fetched_at ? '<p class="stepper-label" style="margin-top:10px">E-Genç’ten alındı · ' + escapeHtml(isoDateLabel(String(activityData.fetched_at).slice(0, 10)) || "") + '</p>' : '');
         }
         if (tab === "calendar") {
           var upcoming = upcomingEvents(12);
@@ -5919,11 +6136,46 @@
           toast("Kayıt silindi.");
           return;
         }
-        if (target.hasAttribute("data-absence-kind")) {
-          var kindRef = target.getAttribute("data-absence-kind").split("::");
-          absenceRecord(kindRef[0], true).kind = kindRef[1];
+        if (target.hasAttribute("data-absence-skind")) {
+          var skRef = target.getAttribute("data-absence-skind").split("::");
+          var skGroup = absenceGroups().find(function (g) { return g.key === skRef[0]; });
+          var skSession = skGroup && skGroup.sessions.find(function (x) { return x.id === skRef[1]; });
+          if (!skSession) return;
+          var skRecord = absenceRecord(skRef[0], true);
+          skRecord.kinds[skRef[1]] = sessionKind(skRecord, skSession) === "uygulama" ? "teorik" : "uygulama";
           persist();
           render();
+          return;
+        }
+        if (target.hasAttribute("data-absence-snap")) {
+          var snapCard = target.closest(".attendance-card");
+          var snapKey = target.getAttribute("data-absence-snap");
+          var snapKind = snapCard && snapCard.querySelector("[data-absence-snap-kind]");
+          var snapHours = snapCard && snapCard.querySelector("[data-absence-snap-hours]");
+          var snapDate = snapCard && snapCard.querySelector("[data-absence-snap-date]");
+          var snapError = setAbsenceSnapshot(snapKey, snapKind ? snapKind.value : "teorik", snapHours ? snapHours.value : "", snapDate ? snapDate.value : "");
+          if (snapError) { toast(snapError); return; }
+          persist();
+          render();
+          toast("Otomasyon değeri kaydedildi. Önceki kayıtların bu değere dahil sayılıyor.");
+          return;
+        }
+        if (target.hasAttribute("data-absence-snap-del")) {
+          var delRef = target.getAttribute("data-absence-snap-del").split("::");
+          delete absenceRecord(delRef[0], true).snapshots[delRef[1]];
+          persist();
+          render();
+          toast("Otomasyon değeri kaldırıldı.");
+          return;
+        }
+        if (target.hasAttribute("data-absence-week")) {
+          var weekChoice = target.getAttribute("data-absence-week");
+          if (weekChoice === "later") state.absenceSnooze = turkeyDateIso();
+          else state.absenceWeekly = weekMonday(turkeyDateIso());
+          persist();
+          if (weekChoice === "yes") { route("attendance", "today"); return; }
+          render();
+          if (weekChoice === "none") toast("Bu hafta için tamam.");
           return;
         }
         if (target.hasAttribute("data-day")) {
@@ -6203,7 +6455,10 @@
           var limitRaw = event.target.value.trim();
           var limitValue = limitRaw === "" ? null : Math.floor(Number(limitRaw));
           if (limitValue !== null && (isNaN(limitValue) || limitValue < 0)) limitValue = null;
-          absenceRecord(event.target.getAttribute("data-absence-limit"), true).limit = limitValue;
+          var limitRef = event.target.getAttribute("data-absence-limit").split("::");
+          var limitKind = limitRef[1] === "uygulama" ? "uygulama" : "teorik";
+          var limitRecord = absenceRecord(limitRef[0], true);
+          if (limitValue === null) delete limitRecord.limits[limitKind]; else limitRecord.limits[limitKind] = limitValue;
           persist();
           // change, kutu odağı kaybederken de gelir; o an başka bir düğmenin
           // tıklaması ekranı zaten yeniden çiziyor olabilir. İç içe innerHTML

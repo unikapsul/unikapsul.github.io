@@ -12,7 +12,7 @@
 "use strict";
 
 // v2 (2026-10-24): yeni tasarım katmanı ve yerel Inter yazı tipi; eski önbellek etkinleşmede silinir.
-var CACHE = "unikapsul-v2";
+var CACHE = "unikapsul-v3";
 var ASSETS = [
   "./",
   "index.html",
@@ -29,7 +29,8 @@ var ASSETS = [
   "data/dining-menu.js",
   "data/academic-calendar.js",
   "data/curriculum.js",
-  "data/exams.js"
+  "data/exams.js",
+  "data/activities.js"
 ];
 
 self.addEventListener("install", function (event) {
