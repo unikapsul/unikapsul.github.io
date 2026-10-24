@@ -1796,6 +1796,9 @@
     .setting-row { min-height: 60px; padding: 8px var(--space-4); font-size: 15px; font-weight: 600; }
     .setting-row .icon:first-child { color: var(--muted); }
     .setting-row .setting-value { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-small); font-weight: 500; }
+    /* Belgesinde sorun bilinen kayıt için öğrenciye kalan tek işaret (2026-10-24). */
+    .confirm-chip { display: inline-block; margin-left: 7px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--tint-cream); color: var(--tint-cream-ink); font-size: 11px; font-weight: 700; letter-spacing: .01em; vertical-align: middle; }
+    .local-note .confirm-chip, .sheet-copy .confirm-chip { margin: 0 6px 0 0; }
     .independence-note { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-4); color: var(--muted); font-size: var(--fs-meta); }
 
     /* Alt gezinme */
@@ -2008,9 +2011,9 @@
         }
         if (diningData.source && diningData.source.source_month === today.slice(0, 7)) {
           var next = nextDiningRow(today);
-          return next ? "Bugün için resmî satır yok · Sıradaki " + diningDateLabel(next.date) : "Bugün için resmî menü satırı yok";
+          return next ? (team() ? "Bugün için resmî satır yok · Sıradaki " : "Bugün menü yok · Sıradaki ") + diningDateLabel(next.date) : (team() ? "Bugün için resmî menü satırı yok" : "Bugün menü yok");
         }
-        return "Güncel aylık menü bekleniyor";
+        return team() ? "Güncel aylık menü bekleniyor" : "Bu ayın menüsü henüz yayımlanmadı";
       }
 
       function diningObservedLabel() {
@@ -2034,10 +2037,10 @@
         var next = row ? null : nextDiningRow(today);
         var shown = row || next;
         var sourceUrl = safeOfficialUrl((diningData.source || {}).source_url || "https://www.ohu.edu.tr/yemekmenu");
-        var body = '<div class="sheet-copy"><p><strong>Aylık resmî listeden ' + (row ? "bugünün satırı" : "sonraki yayımlanmış tarih") + '</strong></p>';
+        var body = '<div class="sheet-copy"><p><strong>' + (team() ? 'Aylık resmî listeden ' + (row ? "bugünün satırı" : "sonraki yayımlanmış tarih") : (row ? "Bugünün menüsü" : "Sıradaki menü")) + '</strong></p>';
 
         if (!shown) {
-          body += '<p>Güncel ay için gösterilebilecek bir menü satırı bulunmuyor.</p>';
+          body += '<p>' + (team() ? 'Güncel ay için gösterilebilecek bir menü satırı bulunmuyor.' : 'Bu ayın menüsü henüz yayımlanmadı.') + '</p>';
         } else if (shown.service_status === "official_holiday") {
           body += '<p><strong>' + escapeHtml(diningDateLabel(shown.date)) + ':</strong> Resmî tatil</p>';
         } else {
@@ -2046,8 +2049,8 @@
             + '</p><p><strong>Kalori:</strong> ' + escapeHtml(shown.calories_text || "Belirtilmemiş") + '</p>';
         }
 
-        body += '<p><strong>Kaynak gözlemi:</strong> ' + escapeHtml(diningObservedLabel()) + '</p>'
-          + '<p>Bu veri aylık listeden alınır. Listede bugüne ait satır bulunmaması yemekhanenin kapalı olduğu anlamına gelmez.</p></div>'
+        body += (team() ? '<p><strong>Kaynak gözlemi:</strong> ' + escapeHtml(diningObservedLabel()) + '</p>'
+          + '<p>Bu veri aylık listeden alınır. Listede bugüne ait satır bulunmaması yemekhanenin kapalı olduğu anlamına gelmez.</p>' : '') + '</div>'
           + '<a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">NÖHÜ yemek listesini aç</a>';
         return body;
       }
@@ -2861,11 +2864,15 @@
        * sınırı değildir: veri dosyaları zaten herkese açık; ayrım yalnız
        * ekranı öğrenci için sadeleştirir.
        */
-      function team() { return !!state.teamView; }
+      // Yayın paketinde (tools/build-public-site.mjs) true yapılır: herkese açık sitede ekip görünümü
+      // açılamaz; iç bilgiler yalnız yerel geliştirmede ve özel yönetim panelinde (2026-10-24).
+      var PUBLIC_BUILD = true;
+
+      function team() { return !PUBLIC_BUILD && !!state.teamView; }
 
       function applyViewFromHash() {
         var hash = (location.hash || "").replace("#", "");
-        if (hash === "ekip" && !state.teamView) { state.teamView = true; persist(); }
+        if (hash === "ekip" && !state.teamView && !PUBLIC_BUILD) { state.teamView = true; persist(); }
         if (hash === "ogrenci" && state.teamView) { state.teamView = false; persist(); }
         document.documentElement.classList.toggle("team-view", team());
       }
@@ -2876,8 +2883,19 @@
         var notes = String(course.recordNotes || "");
         var own = notes.match(/Belgede [^:]{1,6}: [^]*?(?=( Belgede [^:]{1,6}: )|$)/g) || [];
         var out = [];
-        if (course.status === "needs_review") out.push("Bu dersin bilgisi belgeden okunurken belirsizlik çıktı; saatini ve dersliğini resmî belgeyle karşılaştır.");
+        if (course.status === "needs_review") out.push("Saat ve dersliği bölümünün resmî ders programından teyit et.");
         return out.concat(own.map(function (s) { return s.trim(); })).join(" ");
+      }
+
+      /*
+       * Öğrenci ekranında iç süreç dili yok (kullanıcı kararı 2026-10-24): kaynak şeridi, "kontrol
+       * bekliyor", sayfa künyesi, son kontrol tarihi ve benzeri yalnız ekip görünümünde ve özel
+       * yönetim panelinde. Öğrenciye kalan tek işaret, belgesinde sorun bilinen kayıttaki sade
+       * "Teyit et" etiketi ve resmî belgeye bağlantı.
+       */
+      function confirmChip(item) {
+        var status = item && (item.status || item.verification_status);
+        return status === "needs_review" ? '<span class="confirm-chip">Teyit et</span>' : '';
       }
 
       function courseNotes(course) {
@@ -3062,15 +3080,18 @@
       function absenceLimitCopy(group) {
         if (group.limitSource === "user") {
           return 'Sınır: <strong>' + group.limit + ' ders saati</strong> · senin girdiğin (izlence)'
-            + (group.estimate != null ? ' · yönetmelikten tahmin ' + group.estimate : '');
+            + (group.estimate != null && team() ? ' · yönetmelikten tahmin ' + group.estimate : '');
+        }
+        if (group.limitSource === "estimate" && !team()) {
+          return 'Tahmini sınır: <strong>' + group.estimate + ' ders saati</strong>';
         }
         if (group.limitSource === "estimate") {
           return 'Sınır: <strong>' + group.estimate + ' ders saati · tahmini</strong> — ' + group.weeklyHours + ' saat/hafta, dönemde ' + group.termHours
             + ' saat, %' + group.rate + ' (' + (group.kind === "uygulama" ? "uygulama" : "teorik") + ', ' + REGULATION_ARTICLE + ').';
         }
         return group.graduate
-          ? 'Lisansüstü yönetmeliği devam oranı yazmıyor; sınır tahmin edilmedi. İzlencedeki sınırı gir.'
-          : 'Dönem aralığı ya da ders saati bilinmediği için sınır tahmin edilemedi. İzlencedeki sınırı gir.';
+          ? (team() ? 'Lisansüstü yönetmeliği devam oranı yazmıyor; sınır tahmin edilmedi. İzlencedeki sınırı gir.' : 'Devamsızlık sınırını izlencenden girebilirsin.')
+          : (team() ? 'Dönem aralığı ya da ders saati bilinmediği için sınır tahmin edilemedi. İzlencedeki sınırı gir.' : 'Devamsızlık sınırını izlencenden girebilirsin.');
       }
 
       function absenceCard(group, index, full) {
@@ -3129,6 +3150,9 @@
       }
 
       function absenceRuleNote() {
+        if (!team()) {
+          return '<p class="attendance-note">' + icon("info") + '<span>Kayıtlar yalnız bu cihazda tutulur. Yönetmeliğe göre teorik derslerin %30’undan, uygulamaların %20’sinden fazlasına katılmayan genel sınava giremez; sınır tahminidir, izlencendeki sınır geçerlidir.</span></p>';
+        }
         return '<p class="attendance-note">' + icon("info") + '<span>Kayıtlar yalnız bu cihazda, senin girdiğin kadardır; resmî yoklama değildir. '
           + 'Yönetmelik: teorik derslerin %30’undan, uygulamaların %20’sinden fazlasına katılmayan devamsız sayılır ve genel sınava giremez (NA). '
           + 'Sağlık raporları devam süresinin hesabında dikkate alınmaz. Hesap birimi ve yuvarlama belgede yazmadığı için sınır tahminidir; izlencendeki sınır geçerlidir.</span></p>';
@@ -3363,7 +3387,7 @@
       }
 
       function placeCopy(course) {
-        return course.location ? " · " + escapeHtml(course.location) : " · Derslik kaynakta yazmıyor";
+        return course.location ? " · " + escapeHtml(course.location) : (team() ? " · Derslik kaynakta yazmıyor" : "");
       }
 
       function gradeCopy(course) {
@@ -3736,7 +3760,7 @@
           + '</div>'
           + (term ? '<p class="stepper-label" style="margin:0 0 12px">Güz yarıyılı öğretim aralığı ' + diningDateLabel(term.start) + ' – ' + diningDateLabel(term.end)
               + (term.gaps.length ? ' · ara sınav dönemi (' + term.gaps.map(eventDateLabel).join(", ") + ') sayıma katılmadı' : '')
-              + ' · akademik takvim, insan kontrolünden geçmedi.</p>' : '')
+              + (team() ? ' · akademik takvim, insan kontrolünden geçmedi.' : '') + '</p>' : '')
           + groups.map(function (g, i) { return '<div style="margin-bottom:10px">' + absenceCard(g, i, true) + '</div>'; }).join("")
           + absenceRuleNote();
         screen.innerHTML = layout(html, "", true);
@@ -3831,8 +3855,8 @@
         var meta = [];
         if (exam.room_raw) meta.push('<span class="exam-chip">Salon ' + escapeHtml(exam.room_raw) + '</span>');
         if (opts.grade && exam.grade_raw) meta.push('<span class="exam-chip">' + escapeHtml(examGradeLabel(exam.grade_raw)) + '</span>');
-        if (opts.clash) meta.push('<span class="exam-chip warn">Belgede bu saatte ' + opts.clash + ' sınav var</span>');
-        if (exam.verification_status === "needs_review") meta.push('<span class="exam-chip warn">Kontrol bekliyor</span>');
+        if (opts.clash) meta.push('<span class="exam-chip warn">' + (team() ? 'Belgede bu saatte ' + opts.clash + ' sınav var' : 'Aynı saatte ' + opts.clash + ' sınav') + '</span>');
+        if (exam.verification_status === "needs_review") meta.push(team() ? '<span class="exam-chip warn">Kontrol bekliyor</span>' : '<span class="exam-chip warn">Teyit et</span>');
         return '<button class="exam-line" data-exam="' + escapeHtml(exam.exam_id) + '">'
           + '<span class="exam-time">' + escapeHtml(exam.start_time || "—") + '</span>'
           + '<span class="exam-body"><span class="exam-name">' + escapeHtml(exam.course_name) + '</span>'
@@ -3926,8 +3950,8 @@
         } else if (all.length) {
           copy = 'Bölümünün ara sınav programı yayımlandı · ' + all.length + ' sınav';
         } else if (period && daysUntil(period.start) >= 0 && daysUntil(period.start) <= 30) {
-          copy = ((examData.scanned_departments || []).indexOf(department.id) !== -1 ? 'Programın henüz yayımlanmadı' : 'Bölüm duyuruları izlenmiyor')
-            + ' · dönem ' + escapeHtml(eventDateLabel(period));
+          copy = ((examData.scanned_departments || []).indexOf(department.id) !== -1 ? 'Programın henüz yayımlanmadı' : (team() ? 'Bölüm duyuruları izlenmiyor' : 'Ara sınav dönemi'))
+            + (team() || (examData.scanned_departments || []).indexOf(department.id) !== -1 ? ' · dönem ' : ' · ') + escapeHtml(eventDateLabel(period));
         } else {
           return "";
         }
@@ -3959,9 +3983,9 @@
         if (!all.length) {
           html += '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span>'
             + (scanned
-                ? '<h3>Ara sınav programın henüz yayımlanmadı</h3><p>' + escapeHtml(department.name) + ' bölümünün resmî duyuru sayfasında 2026-2027 Güz ara sınav programı yok'
-                  + (examData.checked_at ? ' (son kontrol: ' + escapeHtml(isoDateLabel(examData.checked_at.slice(0, 10)) || examData.checked_at.slice(0, 10)) + ')' : '') + '.'
-                : '<h3>Bu bölümün duyuruları henüz izlenmiyor</h3><p>' + escapeHtml(department.name) + ' için duyuru sayfası adresi elimizde yok; sınav programı yayımlanmış olabilir. Bölümünün kendi duyuru sayfasına bak.')
+                ? '<h3>Ara sınav programın henüz yayımlanmadı</h3><p>' + (team() ? escapeHtml(department.name) + ' bölümünün resmî duyuru sayfasında 2026-2027 Güz ara sınav programı yok'
+                  + (examData.checked_at ? ' (son kontrol: ' + escapeHtml(isoDateLabel(examData.checked_at.slice(0, 10)) || examData.checked_at.slice(0, 10)) + ')' : '') + '.' : 'Yayımlandığında burada görünecek.')
+                : '<h3>Ara sınav programın henüz eklenmedi</h3><p>' + (team() ? escapeHtml(department.name) + ' için duyuru sayfası adresi elimizde yok; sınav programı yayımlanmış olabilir. Bölümünün kendi duyuru sayfasına bak.' : 'Bölümünün duyuru sayfasını takip et.'))
             + (period ? ' Akademik takvime göre ara sınav dönemi ' + escapeHtml(eventDateLabel(period)) + '.' : '') + '</p></div>';
         } else {
           var notices = {};
@@ -3983,16 +4007,16 @@
           noticeList = noticeList.filter(function (n) { return shownSources[n.source_id] || (!mine.length && !byGrade); });
           var review = shown.filter(function (e) { return e.verification_status === "needs_review"; }).length;
           html += examNext(mine.length ? mine : byGrade ? shown : [])
-            + '<p class="exam-source">Bölümün ' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli resmî duyurusundan okundu · insan kontrolünden geçmedi, belge güncellenebilir.'
+            + '<p class="exam-source">Bölümün ' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli duyurusu' + (team() ? ' · insan kontrolünden geçmedi, belge güncellenebilir.' : '.')
             + (source.document_url && sourceIds.length === 1 ? ' <a href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">Belgeyi aç</a>' : '') + '</p>'
-            + (review ? '<p class="exam-banner">' + icon("alert") + '<span>' + examReviewSummary(shown) + ' Ayrıntı için sınava dokun.</span></p>' : '')
+            + (review && team() ? '<p class="exam-banner">' + icon("alert") + '<span>' + examReviewSummary(shown) + ' Ayrıntı için sınava dokun.</span></p>' : '')
             + '<section class="section"><div class="section-heading"><h2>' + (mine.length ? 'Sınav takvimim' : byGrade ? state.grade + '. sınıf ara sınavları' : 'Bölümün ara sınavları') + '</h2>'
             + '<span class="gpa-sub">' + shown.length + ' sınav</span></div>'
             + (mine.length ? '' : byGrade
-                ? '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle eşleşme yok; liste belgedeki sınıf sütununa göre süzüldü. Diğer sınıflar aşağıda.</p>'
-                : '<p class="sheet-copy" style="margin-top:0">Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.</p>')
+                ? '<p class="sheet-copy" style="margin-top:0">' + (team() ? 'Seçtiğin derslerle eşleşme yok; liste belgedeki sınıf sütununa göre süzüldü. Diğer sınıflar aşağıda.' : 'Sınıfının ara sınavları. Diğer sınıflar aşağıda.') + '</p>'
+                : '<p class="sheet-copy" style="margin-top:0">' + (team() ? 'Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.' : 'Bölümünün tüm ara sınavları.') + '</p>')
             + examAgenda(shown, { grade: !mine.length && !byGrade, notes: noticeList })
-            + (noticeList.length ? '<p class="exam-source" style="margin-top:10px">"Belgedeki not" satırları merkezi ve fakülte ortak sınavlar için ayrılmış saattir; onların programı ayrı yayımlanır.</p>' : '')
+            + (noticeList.length ? '<p class="exam-source" style="margin-top:10px">' + (team() ? '"Belgedeki not" satırları merkezi ve fakülte ortak sınavlar için ayrılmış saattir; onların programı ayrı yayımlanır.' : 'Not satırları merkezi ve fakülte ortak sınavlara ayrılmış saatlerdir; onların programı ayrıca yayımlanır.') + '</p>' : '')
             + '</section>';
           if (mine.length || byGrade) {
             html += '<section class="section"><details class="gpa-details"><summary><span>Bölümün tüm ara sınavları</span><span class="gpa-sub">' + all.length + ' sınav · bütün sınıflar</span></summary>'
@@ -4006,11 +4030,11 @@
           .sort(function (a, b) { return String(b.published_at).localeCompare(String(a.published_at)); });
         if (formasyon.length) others = others.concat(team() ? formasyon : [formasyon[0]]);
         if (others.length) {
-          html += '<section class="section"><details class="gpa-details"><summary><span>Uygulamaya henüz eklenmeyen belgeler</span><span class="gpa-sub">' + others.length + ' belge · resmî sayfada açılır</span></summary><div class="gpa-details-body"><div class="list-stack">'
+          html += '<section class="section"><details class="gpa-details"><summary><span>' + (team() ? 'Uygulamaya henüz eklenmeyen belgeler' : 'Diğer sınav duyuruları') + '</span><span class="gpa-sub">' + others.length + (team() ? ' belge · resmî sayfada açılır' : ' duyuru') + '</span></summary><div class="gpa-details-body"><div class="list-stack">'
             + others.map(function (u) {
                 return '<a class="list-card" href="' + escapeHtml(safeOfficialUrl(u.document_urls[0])) + '" target="_blank" rel="noopener noreferrer">'
                   + '<span class="icon-tile">' + icon("database") + '</span><span><span class="list-title">' + escapeHtml(u.title) + '</span>'
-                  + '<span class="list-meta">' + escapeHtml(isoDateLabel(u.published_at) || "") + (team() ? ' · ' + escapeHtml(u.reason) : ' · uygulamada gösterilmiyor, belgeyi aç') + '</span></span>' + icon("chevron") + '</a>';
+                  + '<span class="list-meta">' + escapeHtml(isoDateLabel(u.published_at) || "") + (team() ? ' · ' + escapeHtml(u.reason) : ' · belgeyi aç') + '</span></span>' + icon("chevron") + '</a>';
               }).join("") + '</div></div></details></section>';
         }
         screen.innerHTML = layout(html, "", true);
@@ -4024,16 +4048,17 @@
         return '<div class="sheet-copy">'
           + '<p><strong>' + escapeHtml(exam.course_name) + '</strong>' + (exam.course_code ? ' · ' + escapeHtml(exam.course_code) : '') + '</p>'
           + '<p><strong>Tarih:</strong> ' + escapeHtml(examDay(exam)) + (exam.date ? ' · ' + escapeHtml(examCountdown(exam)) : '') + '</p>'
-          + '<p><strong>Başlangıç:</strong> ' + escapeHtml(examTime(exam)) + ' · ' + (endWritten ? 'belgede bitiş ' + escapeHtml(endWritten[1]) : 'bitiş saati belgede yazmıyor') + '</p>'
-          + '<p><strong>Salon:</strong> ' + escapeHtml(exam.room_raw || "belgede boş") + '</p>'
+          + '<p><strong>' + (endWritten || team() ? 'Başlangıç' : 'Saat') + ':</strong> ' + escapeHtml(examTime(exam)) + (endWritten ? ' · bitiş ' + escapeHtml(endWritten[1]) : (team() ? ' · bitiş saati belgede yazmıyor' : '')) + '</p>'
+          + (exam.room_raw || team() ? '<p><strong>Salon:</strong> ' + escapeHtml(exam.room_raw || "belgede boş") + '</p>' : '')
           + (exam.grade_raw ? '<p><strong>Sınıf:</strong> ' + escapeHtml(exam.grade_raw) + '</p>' : '')
           + (exam.student_count != null && exam.student_count !== "" ? '<p><strong>Öğrenci sayısı:</strong> ' + escapeHtml(String(exam.student_count)) + '</p>' : '')
-          + '<p><strong>Durum:</strong> ' + escapeHtml(statusLabel(exam.verification_status)) + '</p>'
-          + (exam.notes ? '<p><strong>Not:</strong> ' + escapeHtml(exam.notes) + '</p>' : '')
-          + '<p><strong>Kaynak:</strong> ' + escapeHtml(src.title || "") + ' · yayım ' + escapeHtml(isoDateLabel(src.published_at) || "bilinmiyor") + ' · ' + escapeHtml(exam.source_page) + '</p>'
-          + '<p><strong>Öğretim elemanı:</strong> ' + escapeHtml(instructorCopy(exam.instructor_raw)) + '</p>'
+          + (team() ? '<p><strong>Durum:</strong> ' + escapeHtml(statusLabel(exam.verification_status)) + '</p>'
+              + (exam.notes ? '<p><strong>Not:</strong> ' + escapeHtml(exam.notes) + '</p>' : '')
+              + '<p><strong>Kaynak:</strong> ' + escapeHtml(src.title || "") + ' · yayım ' + escapeHtml(isoDateLabel(src.published_at) || "bilinmiyor") + ' · ' + escapeHtml(exam.source_page) + '</p>'
+            : (exam.verification_status === "needs_review" ? '<p>' + confirmChip(exam) + ' Tarih, saat ve salonu sınav programı belgesinden teyit et.</p>' : ''))
+          + (team() || instructorCopy(exam.instructor_raw) !== "Belgede yazmıyor" ? '<p><strong>Öğretim elemanı:</strong> ' + escapeHtml(instructorCopy(exam.instructor_raw)) + '</p>' : '')
           + (team() ? '<p><strong>Ekip:</strong> ' + escapeHtml(exam.exam_id) + ' · ' + escapeHtml(src.file || "") + ' · sha256 ' + escapeHtml((src.sha256 || "").slice(0, 16)) + '…</p>' : '')
-          + '<p>Sınav yeri ve saati değişebilir; kesin bilgi için belgeyi ve bölüm duyurusunu kontrol et.</p></div>'
+          + (team() ? '<p>Sınav yeri ve saati değişebilir; kesin bilgi için belgeyi ve bölüm duyurusunu kontrol et.</p>' : '') + '</div>'
           + (src.document_url ? '<a class="primary-button" style="width:100%" href="' + escapeHtml(safeOfficialUrl(src.document_url)) + '" target="_blank" rel="noopener noreferrer">Sınav programı belgesini aç</a>' : '')
           + (src.announcement_url ? '<a class="secondary-button" style="width:100%;margin-top:8px" href="' + escapeHtml(safeOfficialUrl(src.announcement_url)) + '" target="_blank" rel="noopener noreferrer">Duyuru sayfasını aç</a>' : '');
       }
@@ -4153,11 +4178,12 @@
         var html = ''
           + brandHeader()
           + deptChip()
-          + '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>'
+          + (team() ? '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>' : '')
           + stateBanner()
           + (conflict ? '<button class="alert-card" data-route="program"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + escapeHtml(conflict.a.name) + ' ve ' + escapeHtml(conflict.b.name) + ' · ' + escapeHtml(conflict.start) + '–' + escapeHtml(conflict.end) + '</span></span>' + icon("chevron") + '</button>' : "")
-          + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + ' · ' + escapeHtml(next.location) + '</span><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + escapeHtml(next.grade) + '. sınıf' + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
+          + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
           + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
+          + todayDiningCard()
           + (function () {
               // Ara sınav ve devamsızlık yan yana pastel kartlar; yalnız biri varsa tek sütun.
               var tiles = [examTodayCard(), attendanceTodayCard()].filter(Boolean);
@@ -4168,8 +4194,33 @@
         screen.innerHTML = layout(html, "today", false);
       }
 
+      /*
+       * Yemekhane (kullanıcı 2026-10-24: derslerin altında). Bugün menü varsa bugünü, yoksa
+       * (hafta sonu, tatil) aylık listedeki sıradaki günü gösterir; liste yoksa bunu söyler.
+       */
+      function todayDiningCard() {
+        var today = turkeyDateIso();
+        var row = diningRowFor(today);
+        var title = "Bugün yemekhanede", copy;
+        if (row && row.service_status === "official_holiday") {
+          copy = "Resmî tatil";
+        } else if (row && row.items_raw && row.items_raw.length) {
+          copy = row.items_raw.map(diningItemLabel).join(" · ");
+        } else {
+          var next = nextDiningRow(today);
+          if (next && next.items_raw && next.items_raw.length) {
+            title = "Yemekhane · " + diningDateLabel(next.date);
+            copy = next.items_raw.map(diningItemLabel).join(" · ");
+          } else {
+            title = "Yemekhane";
+            copy = diningCardCopy();
+          }
+        }
+        return '<section class="section">' + agendaCard("tint-green", "utensils", title, copy, "", 'data-sheet="menu"') + '</section>';
+      }
+
       function timelineRow(course, isNext) {
-        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + '</span><span class="timeline-meta">' + escapeHtml(course.location) + branchCopy(course) + '<br>' + escapeHtml(course.departmentName) + ' · ' + escapeHtml(course.grade) + '. sınıf</span></span>' + icon("chevron") + '</button></div>';
+        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + confirmChip(course) + '</span><span class="timeline-meta">' + escapeHtml(course.location) + branchCopy(course) + '<br>' + escapeHtml(course.departmentName) + ' · ' + gradeCopy(course) + '</span></span>' + icon("chevron") + '</button></div>';
       }
 
       function contextCard(className, iconName, title, copy, sheet) {
@@ -4224,10 +4275,10 @@
 
       function programRow(course, isNext) {
         var who = instructorCopy(course.instructor);
-        var meta = escapeHtml(course.location || "Derslik kaynakta yazmıyor") + branchCopy(course)
+        var meta = escapeHtml(course.location || (team() ? "Derslik kaynakta yazmıyor" : "")) + branchCopy(course)
           + (who && who !== "Belgede yazmıyor" && !course.userEntered ? "<br>" + escapeHtml(who) : "");
         return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span>'
-          + '<button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + programTag(course)
+          + '<button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + programTag(course) + confirmChip(course)
           + (course.userEntered ? '<span class="own-chip">senin eklediğin</span>' : '') + '</span>'
           + '<span class="timeline-meta">' + meta + '</span>' + attendanceBadge(course) + '</span>' + icon("chevron") + '</button></div>';
       }
@@ -4247,7 +4298,7 @@
           + deptChip()
           + '<h1 class="page-title">Ders programım</h1>'
           + '<p class="page-lead">2026–2027 Güz' + (secondDepartment() ? ' · ' + escapeHtml(department.name) + ' + ' + escapeHtml(secondDepartment().name) + ' (' + escapeHtml(secondKindLabel()) + ')' : ' · Haftanı tek bakışta gör') + '</p>'
-          + '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>'
+          + (team() ? '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>' : '')
           + stateBanner()
           + (imported ? '<button class="feature-card" data-sheet="program-tools"><span class="feature-icon">' + icon("calendar") + '</span><span><span class="feature-title" style="color:var(--primary)">' + escapeHtml(span.label) + '</span><span class="feature-copy">' + escapeHtml(weekSummaryCopy(span)) + '</span></span>' + icon("chevron") + '</button>' : '')
           + (imported ? '<section class="section"><div class="section-heading"><h2>Haftalık görünüm</h2><button class="text-button" data-route="course-add">Düzenle</button></div>'
@@ -4255,7 +4306,7 @@
           + (conflict ? '<button class="alert-card" data-sheet="conflict"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + conflict.start + '–' + conflict.end + (conflict.shared ? ' · aynı saat ve derslik' : ' saatleri arasında') + (dayConflicts.length > 1 ? ' · bu gün ' + dayConflicts.length + ' uyarı' : '') + '</span></span>' + icon("chevron") + '</button>' : "")
           + (dayCourses.length
               ? '<div class="panel"><div class="timeline' + (nextId ? ' has-next' : '') + '">' + dayCourses.map(function (course) { return programRow(course, course.id === nextId); }).join("") + '</div></div>'
-              : (imported ? '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Bu güne ders eklenmemiş</h3><p>Seçtiğin derslerden bu güne düşen yok. Bu, üniversitenin resmî ders kaydı değildir.</p></div>' : emptyProgramCard()))
+              : (imported ? '<div class="empty-state" style="min-height:180px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Bu gün dersin yok</h3><p>Seçtiğin derslerden bu güne düşen yok.</p></div>' : emptyProgramCard()))
           + (imported ? '</section>' : '')
           + (imported && state.selected.length ? '<button class="text-button grade-all" data-route="attendance">Tüm derslerimin devamsızlığı ' + icon("chevron") + '</button>' : '')
           + (imported
@@ -4275,7 +4326,7 @@
       }
 
       function scheduleCourse(course) {
-        return '<button class="schedule-course" data-course="' + escapeHtml(course.id) + '"><span class="schedule-time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span><span class="schedule-name">' + escapeHtml(course.name) + programTag(course) + '</span><span class="schedule-location">' + escapeHtml(course.location) + branchCopy(course) + ' · ' + escapeHtml(course.grade) + '. sınıf</span>' + attendanceBadge(course) + '</span>' + icon("chevron") + '</button>';
+        return '<button class="schedule-course" data-course="' + escapeHtml(course.id) + '"><span class="schedule-time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span><span class="schedule-name">' + escapeHtml(course.name) + programTag(course) + '</span><span class="schedule-location">' + escapeHtml(course.location) + branchCopy(course) + ' · ' + gradeCopy(course) + '</span>' + attendanceBadge(course) + '</span>' + icon("chevron") + '</button>';
       }
 
       /*
@@ -4304,7 +4355,7 @@
           + '<h1 class="page-title">Kampüs gündemi</h1>'
           + '<p class="page-lead">İhtiyacın olan bilgiler bir arada</p>'
           + '<button class="feature-card" data-agenda="announcements"><span class="feature-icon">' + icon("megaphone") + '</span><span><span class="feature-title">Duyurular</span><span class="feature-copy">'
-          + (own ? 'Programını ilgilendiren ' + own + ' resmî belge' : 'Programın için okunmuş resmî belge yok') + '</span></span>' + icon("chevron") + '</button>'
+          + (own ? 'Bölümünün yayımladığı ' + (own > 1 ? own + ' duyuru' : 'duyuru') : 'Bölümün için henüz duyuru yok') + '</span></span>' + icon("chevron") + '</button>'
           + '<div class="filter-row" role="group" aria-label="Gündem filtresi" style="margin-top:16px">' + tabs.map(function (t) {
               return '<button class="segment ' + (tab === t[0] ? "active" : "") + '" data-agenda="' + t[0] + '"' + (tab === t[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + '>' + t[1] + '</button>';
             }).join("") + '</div>'
@@ -4348,9 +4399,9 @@
         var who = names.length > 2 ? names.length + " program" : names.join(", ");
         return '<button class="list-card" data-announcement="' + escapeHtml(meta.source_id) + '">'
           + '<span class="icon-tile">' + icon("megaphone") + '</span>'
-          + '<span><span class="list-title">' + escapeHtml(who || meta.source_id) + ' haftalık programı'
+          + '<span><span class="list-title">' + escapeHtml(who || meta.source_id) + ' haftalık ders programı'
           + (entry.own ? '<span class="own-chip">senin programın</span>' : "") + '</span>'
-          + '<span class="list-meta">Belge yayımı: ' + escapeHtml(isoDateLabel(meta.source_published_at) || "bilinmiyor")
+          + '<span class="list-meta">' + (team() ? 'Belge yayımı: ' + escapeHtml(isoDateLabel(meta.source_published_at) || "bilinmiyor") : escapeHtml(isoDateLabel(meta.source_published_at) || ""))
           + (team() ? '<br>' + escapeHtml(meta.source_version_id) : '') + '</span></span>'
           + icon("chevron") + '</button>';
       }
@@ -4361,17 +4412,17 @@
           var next = upcomingEvents(1)[0];
           var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
           return '<section class="section" style="margin-top:8px"><div class="section-heading"><h2>Bugün</h2></div><div class="context-grid">'
-            + agendaCard("tint-cream", "utensils", "Yemekhane", diningCardCopy(), "Kaynak: NÖHÜ aylık yemek listesi · gözlem " + diningObservedLabel(), 'data-sheet="menu"')
+            + agendaCard("tint-cream", "utensils", "Yemekhane", diningCardCopy(), team() ? "Kaynak: NÖHÜ aylık yemek listesi · gözlem " + diningObservedLabel() : "", 'data-sheet="menu"')
             + '</div></section>'
             + '<section class="section"><div class="section-heading"><h2>Son güncellemeler</h2></div><div class="context-grid">'
             + agendaCard("tint-violet", "calendar", "Akademik takvim",
                 next ? (next.title.length > 48 ? next.title.slice(0, 47) + "…" : next.title) + " · " + eventDateLabel(next) + " · " + eventCountdown(next) : "Yaklaşan kayıt yok",
-                "Kaynak: senato kararı · insan kontrolü bekliyor", 'data-agenda="calendar"')
+                team() ? "Kaynak: senato kararı · insan kontrolü bekliyor" : "", 'data-agenda="calendar"')
             + agendaCard("tint-blue", "megaphone", "Bölüm duyuruları",
-                own ? own + " resmî belge programını besliyor" : "Programın için okunmuş resmî belge yok",
-                "Yalnız üniversitenin kendi yayınından", 'data-agenda="announcements"')
+                team() ? (own ? own + " resmî belge programını besliyor" : "Programın için okunmuş resmî belge yok") : (own ? "Bölümünün ders programı duyurusu" : "Henüz duyuru yok"),
+                "", 'data-agenda="announcements"')
             + '</div></section>'
-            + '<div class="local-note">' + icon("info") + '<span>Bilgiler resmî kaynaklardan otomatik okunur ve insan kontrolü bekler; kesin bilgi için kaynağı aç.</span></div>';
+            + (team() ? '<div class="local-note">' + icon("info") + '<span>Bilgiler resmî kaynaklardan otomatik okunur ve insan kontrolü bekler; kesin bilgi için kaynağı aç.</span></div>' : '');
         }
         if (tab === "dining") {
           return '<div class="panel" style="padding:16px">' + diningMenuSheetHtml() + '</div>';
@@ -4382,8 +4433,7 @@
             return '<div class="empty-state"><span class="icon-tile">' + icon("calendar") + '</span>'
               + '<h3>Yaklaşan tarih yok</h3><p>Arşivdeki akademik takvimde bugünden sonraya kalan kayıt bulunmuyor.</p></div>';
           }
-          return '<p class="sheet-copy">Resmî akademik takvimden (senato kararı) okundu. '
-            + 'Kayıtlar <strong>insan kontrolü beklemektedir</strong>; kesin bilgi için belgeyi aç.</p>'
+          return (team() ? '<p class="sheet-copy">Resmî akademik takvimden (senato kararı) okundu. Kayıtlar <strong>insan kontrolü beklemektedir</strong>; kesin bilgi için belgeyi aç.</p>' : '')
             + '<div class="list-stack" style="margin-top:10px">'
             + upcoming.map(function (item) {
                 return '<button class="list-card" data-calendar-event="' + escapeHtml(item.start + '|' + item.title) + '">'
@@ -4393,7 +4443,7 @@
                   + icon("chevron") + '</button>';
               }).join("")
             + '</div>'
-            + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="calendar">Kaynak belgesi</button></div>';
+            + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="calendar">Akademik takvim belgesi</button></div>';
         }
         var entries = announcementEntries().filter(function (entry) { return team() || entry.own; });
         if (!entries.length && !team()) {
@@ -4435,7 +4485,7 @@
           + '<section class="section"><div class="section-heading"><h2>Araçlarım</h2></div><div class="tile-grid">'
           + tile("tint-cream", "clock", "Devamsızlık", groups ? groups + ' ders izleniyor' : 'Ders seçince ders bazında tut', "attendance")
           + tile("tint-blue", "calendar", "Ara sınavlarım", exams ? exams + ' sınavın var' : (deptExams ? 'Bölüm programı yayımlandı' : 'Programın henüz yayımlanmadı'), "exams")
-          + tile("tint-green", "database", "Ders planı", plan ? 'Resmî Bilgi Paketi planı' : 'Programın planı henüz yok', "curriculum")
+          + tile("tint-green", "database", "Ders planı", plan ? 'Bölümünün ders planı' : 'Ders planı henüz eklenmedi', "curriculum")
           + tile("tint-violet", "map", "Kampüs rehberi", 'Birimleri ve binaları ara', "campus")
           + '</div></section>'
           + '<section class="section"><div class="section-heading"><h2>Tercihler</h2></div><div class="settings-card">'
@@ -4487,10 +4537,10 @@
           }).length;
           out.push({
             icon: department.icon,
-            title: team() ? department.name + " · " + count + " ders kaydı okundu" : department.name + " ders programı resmî belgeden alındı",
+            title: team() ? department.name + " · " + count + " ders kaydı okundu" : department.name + " ders programı yayımlandı",
             meta: team()
               ? escapeHtml(meta.source_version_id) + "<br>Arşive alınma: " + escapeHtml(isoDateLabel(meta.fetched_at) || "bilinmiyor")
-              : "Belge yayımı: " + escapeHtml(isoDateLabel(meta.source_published_at) || "bilinmiyor") + " · son kontrol: " + escapeHtml(isoDateLabel(meta.fetched_at) || "bilinmiyor"),
+              : escapeHtml(isoDateLabel(meta.source_published_at) || ""),
             sheet: "announcement",
             source: id,
             at: meta.fetched_at || ""
@@ -4500,7 +4550,7 @@
           out.push({
             icon: "database",
             title: department.name + (team() ? " için ders satırı yok" : " ders programı henüz yok"),
-            meta: escapeHtml(statusCopy()),
+            meta: team() ? escapeHtml(statusCopy()) : "Yayımlandığında burada görünecek",
             sheet: "source",
             at: ""
           });
@@ -4511,8 +4561,8 @@
         if (!team()) {
           needsReview = selectedCourses().filter(function (course) { return course.status === "needs_review"; });
           if (needsReview.length) {
-            out.push({ icon: "alert", title: needsReview.length + " dersinin bilgisi kontrol bekliyor",
-                       meta: "Belgeden okunurken belirsizlik çıktı; saatini ve dersliğini resmî belgeyle karşılaştır.", sheet: "source", at: "" });
+            out.push({ icon: "alert", title: needsReview.length + " dersini resmî programdan teyit et",
+                       meta: "Saat ve dersliği bölümünün ders programı belgesiyle karşılaştır.", sheet: "source", at: "" });
           }
           var nextEvent = upcomingEvents(1)[0];
           if (nextEvent) {
@@ -4846,8 +4896,8 @@
           + '<button class="secondary-button" style="width:100%;margin-top:12px" data-sheet="custom-course">' + icon("plus") + ' Kendi dersimi ekle</button>'
           + gpaPreviousBlock()
           + '<p class="attendance-note">' + icon("info")
-          + '<span>Katsayılar yönetmelik Madde 30 ve 31\'e dayanıyor; belgenin asıl metni henüz doğrulanmadı. '
-          + 'Harf notu tahmin edilmez, geçme kararı gösterilmez.</span></p>';
+          + '<span>' + (team() ? 'Katsayılar yönetmelik Madde 30 ve 31\'e dayanıyor; belgenin asıl metni henüz doğrulanmadı. Harf notu tahmin edilmez, geçme kararı gösterilmez.'
+              : 'Hesap tahminidir; kesin ortalaman öğrenci bilgi sisteminde yazar. Katsayılar yönetmelik Madde 30 ve 31’e göredir.') + '</span></p>';
 
         screen.innerHTML = layout(html, "", true);
       }
@@ -4863,15 +4913,15 @@
         }
         var html = ''
           + '<div class="screen-header"><button class="icon-button" data-route="' + escapeHtml(state.previousRoute) + '" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Ders ayrıntısı</h1><button class="icon-button" data-sheet="course-actions" aria-label="Ders işlemleri">' + icon("more") + '</button></div>'
-          + '<div class="details-hero"><span class="hero-icon">' + icon(currentDepartment().icon) + '</span><h2>' + escapeHtml(course.name) + '</h2><p>' + courseCodeCopy(course) + escapeHtml(course.departmentName) + ' · ' + escapeHtml(course.grade) + '. sınıf' + (isSecondCourse(course) ? ' · ' + escapeHtml(secondKindLabel()) : '') + '</p><p>' + escapeHtml(course.dayLong) + ' · ' + escapeHtml(course.start) + '–' + escapeHtml(course.end) + '</p></div>'
-          + (course.userEntered ? '' : '<div class="detail-box" style="margin-top:12px"><span>Öğretim elemanı · belgede yazdığı gibi</span><strong>' + escapeHtml(instructorCopy(course.instructor)) + '</strong></div>')
-          + '<div class="detail-grid"><div class="detail-box"><span>Derslik</span><strong>' + escapeHtml(course.location || "Belirtilmedi") + '</strong></div><div class="detail-box"><span>Şube</span><strong>' + escapeHtml(course.branch || "Belirtilmemiş") + '</strong></div><div class="detail-box"><span>Tür</span><strong>' + escapeHtml(KIND_LABEL[course.kind] || "Ders") + (course.delivery === "uzaktan" ? " · uzaktan" : "") + '</strong></div><div class="detail-box"><span>Kontrol</span><strong>' + escapeHtml(statusLabel(course.status)) + '</strong></div></div>'
-          + (courseNotes(course) ? '<div class="local-note" style="margin-top:12px">' + icon("alert") + '<span>' + escapeHtml(courseNotes(course)) + '</span></div>' : "")
+          + '<div class="details-hero"><span class="hero-icon">' + icon(currentDepartment().icon) + '</span><h2>' + escapeHtml(course.name) + '</h2><p>' + courseCodeCopy(course) + escapeHtml(course.departmentName) + ' · ' + gradeCopy(course) + (isSecondCourse(course) ? ' · ' + escapeHtml(secondKindLabel()) : '') + '</p><p>' + escapeHtml(course.dayLong) + ' · ' + escapeHtml(course.start) + '–' + escapeHtml(course.end) + '</p></div>'
+          + (course.userEntered || (!team() && instructorCopy(course.instructor) === "Belgede yazmıyor") ? '' : '<div class="detail-box" style="margin-top:12px"><span>' + (team() ? 'Öğretim elemanı · belgede yazdığı gibi' : 'Öğretim elemanı') + '</span><strong>' + escapeHtml(instructorCopy(course.instructor)) + '</strong></div>')
+          + '<div class="detail-grid"><div class="detail-box"><span>Derslik</span><strong>' + escapeHtml(course.location || "Belirtilmedi") + '</strong></div>' + (course.branch || team() ? '<div class="detail-box"><span>Şube</span><strong>' + escapeHtml(course.branch || "Belirtilmemiş") + '</strong></div>' : '') + '<div class="detail-box"><span>Tür</span><strong>' + escapeHtml(KIND_LABEL[course.kind] || "Ders") + (course.delivery === "uzaktan" ? " · uzaktan" : "") + '</strong></div>' + (team() ? '<div class="detail-box"><span>Kontrol</span><strong>' + escapeHtml(statusLabel(course.status)) + '</strong></div>' : '') + '</div>'
+          + (courseNotes(course) ? '<div class="local-note" style="margin-top:12px">' + icon(team() ? "alert" : "info") + '<span>' + confirmChip(course) + escapeHtml(courseNotes(course)) + '</span></div>' : "")
           + '<section class="section">' + recordSourceCard(course) + '</section>'
           + examCourseCard(course)
           + gradeCard(course)
           + attendanceCard(course)
-          + '<section class="section"><button class="info-card deadline" data-route="campus"><span class="icon-tile">' + icon("building") + '</span><span><span class="card-title">Dersliğin bağlı olduğu bina</span><span class="card-copy">' + escapeHtml(course.facultyName) + ' · şematik rehber</span></span>' + icon("chevron") + '</button></section>'
+          + '<section class="section"><button class="info-card deadline" data-route="campus"><span class="icon-tile">' + icon("building") + '</span><span><span class="card-title">Dersliğin bağlı olduğu bina</span><span class="card-copy">' + escapeHtml(course.facultyName) + ' · kampüs rehberi</span></span>' + icon("chevron") + '</button></section>'
           + (course.userEntered
               ? '<button class="secondary-button danger" style="width:100%;margin-top:16px" data-custom-remove="' + escapeHtml(course.id) + '">' + icon("x") + ' Bu dersi kaldır</button>'
               : '<button class="secondary-button" style="width:100%;margin-top:16px" data-sheet="report">Hatalı bilgi bildir</button>');
@@ -4994,7 +5044,8 @@
           lines.push("LOCATION:" + icsEscape(course.location || ""));
           lines.push("DESCRIPTION:" + icsEscape(
             (course.userEntered
-              ? "Kendi eklediğin ders · resmî kaynağı yok"
+              ? "Kendi eklediğin ders"
+              : !team() ? "ÜniKapsül · " + course.departmentName + " ders programı"
               : "Durum: " + statusLabel(course.status)
                 + (meta ? " · Kaynak: " + meta.source_version_id : "")
                 + (course.sourcePage ? " · " + course.sourcePage : ""))
@@ -5111,12 +5162,15 @@
 
       function recordSourceCard(course) {
         if (course.userEntered) {
-          return '<div class="info-card"><span class="icon-tile">' + icon("info") + '</span><span><span class="card-title">Kendi eklediğin ders</span><span class="card-copy">Kaynak gösterilmez; bu kayıt resmî program kaydı değil, senin girdindir.</span></span></div>';
+          return '<div class="info-card"><span class="icon-tile">' + icon("info") + '</span><span><span class="card-title">Kendi eklediğin ders</span><span class="card-copy">Bu dersi sen ekledin; yalnız bu cihazda tutulur.</span></span></div>';
         }
         var meta = sourceMeta(course.sourceId);
         var copy = meta
           ? (team() ? escapeHtml(meta.source_version_id) : 'Resmî belge · yayım ' + escapeHtml(isoDateLabel(meta.source_published_at) || "tarihi yazmıyor")) + ' · ' + escapeHtml(course.sourcePage || "sayfa belirtilmemiş")
           : 'Kaynak künyesi bulunamadı (' + escapeHtml(course.sourceId || "—") + ')';
+        if (!team()) {
+          return '<button class="info-card menu" data-sheet="record-source"><span class="icon-tile">' + icon("database") + '</span><span><span class="card-title">Resmî ders programı</span><span class="card-copy">Bölümünün yayımladığı belgeyi aç</span></span>' + icon("chevron") + '</button>';
+        }
         return '<button class="info-card menu" data-sheet="record-source"><span class="icon-tile">' + icon("database") + '</span><span><span class="card-title">Kaynak ve doğrulama</span><span class="card-copy">' + copy + '</span></span>' + icon("chevron") + '</button>';
       }
 
@@ -5128,6 +5182,16 @@
             + '<p>Programına girmesi için gün, başlangıç ve bitiş saatinin dolu olması gerekir.</p></div>';
         }
         var meta = sourceMeta(course.sourceId);
+        if (!team()) {
+          var stuHtml = '<div class="sheet-copy"><p><strong>' + escapeHtml(course.name) + '</strong>' + (course.code ? ' · ' + escapeHtml(course.code) : "") + '</p>'
+            + '<p>Bu ders, bölümünün yayımladığı ' + escapeHtml((meta && isoDateLabel(meta.source_published_at)) ? isoDateLabel(meta.source_published_at) + ' tarihli ' : '') + 'haftalık ders programından alınmıştır.</p>'
+            + (course.status === "needs_review" ? '<p>' + confirmChip(course) + ' Saat ve dersliği bu belgeden teyit et.</p>' : '') + '</div>';
+          var stuDoc = meta ? safeOfficialUrl(meta.source_document_url) : "";
+          var stuAnn = meta && meta.announcement_url ? safeOfficialUrl(meta.announcement_url) : "";
+          return stuHtml
+            + (stuDoc ? '<a class="primary-button" style="width:100%" href="' + escapeHtml(stuDoc) + '" target="_blank" rel="noopener noreferrer">Ders programı belgesini aç</a>' : '')
+            + (stuAnn ? '<a class="secondary-button" style="width:100%;margin-top:8px" href="' + escapeHtml(stuAnn) + '" target="_blank" rel="noopener noreferrer">Duyuru sayfasını aç</a>' : '');
+        }
         var html = '<div class="sheet-copy"><p><strong>' + escapeHtml(course.name) + '</strong>'
           + (course.code ? ' · ' + escapeHtml(course.code) : "") + '</p>'
           + '<p><strong>Kayıt durumu:</strong> ' + escapeHtml(statusLabel(course.status)) + '</p>'
@@ -5170,7 +5234,7 @@
             + '<p><strong>Ders saatleri ve derslikler</strong> üniversitenin yayımladığı haftalık ders programı belgesinden okunur'
             + (Object.keys(ownIds).length ? ' (' + escapeHtml(d.name) + ': ' + Object.keys(ownIds).map(function (id) { return escapeHtml(isoDateLabel((offeringSources[id] || {}).source_published_at) || "tarihi yazmayan") + " tarihli belge"; }).join(", ") + ')' : ' — ' + escapeHtml(d.name) + ' için belge henüz okunmadı') + '.</p>'
             + '<p><strong>Ders planı</strong> NÖHÜ Bilgi Paketi\'nden, <strong>akademik takvim</strong> senato kararından, <strong>yemek menüsü</strong> yemekhanenin aylık listesinden gelir.</p>'
-            + '<p>Bu bilgilerin hiçbiri henüz bir insan tarafından tek tek kontrol edilmedi. Belge değişebilir; kesin bilgi için her ekrandaki “belgeyi aç” bağlantısını kullan.</p>'
+            + '<p>Bir bilgi resmî belgeyle uyuşmuyorsa “Hatalı bilgi bildir” ile haber ver; kısa sürede düzeltilir.</p>'
             + '<p>Not, devamsızlık ve kendi eklediğin dersler yalnız senin girdindir ve bu cihazda kalır.</p></div>';
         }
         var stats = recordStats();
@@ -5290,6 +5354,11 @@
 
       function curriculumCourseRow(course) {
         var flagged = course.status === "needs_review";
+        if (!team()) {
+          return '<div class="plan-row"><span class="plan-code">' + escapeHtml(course.code || "—") + '</span>'
+            + '<span class="plan-body"><span class="card-title">' + escapeHtml(course.name) + confirmChip(course) + '</span>'
+            + (course.type ? '<span class="list-meta">' + escapeHtml(course.type) + '</span>' : '') + '</span></div>';
+        }
         return '<div class="plan-row' + (flagged ? " flagged" : "") + '">'
           + '<span class="plan-code">' + escapeHtml(course.code || "—") + '</span>'
           + '<span class="plan-body"><span class="card-title">' + escapeHtml(course.name) + '</span>'
@@ -5302,6 +5371,11 @@
 
       function curriculumSourceCard(plan) {
         var meta = curriculumSource(plan);
+        if (!team()) {
+          return meta && meta.source_document_url
+            ? '<a class="info-card announcement" href="' + escapeHtml(safeOfficialUrl(meta.source_document_url)) + '" target="_blank" rel="noopener noreferrer"><span class="icon-tile">' + icon("database") + '</span><span><span class="card-title">Bilgi Paketi ders planı</span><span class="card-copy">Resmî sayfayı aç</span></span>' + icon("chevron") + '</a>'
+            : '';
+        }
         if (!meta) {
           return '<div class="info-card"><span class="icon-tile">' + icon("alert") + '</span><span><span class="card-title">Kaynak künyesi çözülemedi</span><span class="card-copy">Bu plan gösterilmemeliydi; hata bildir.</span></span></div>';
         }
@@ -5360,10 +5434,10 @@
               : '<div class="empty-state"><h3>Bu yarıyıl için satır yok</h3><p>Kaynak sayfada bu sınıf ve yarıyıl için ders listelenmemiş' + (other.length ? '; diğer yarıyılda ' + other.length + ' ders var' : "") + '.</p></div>')
           + '</section>'
           + '<section class="section">' + curriculumSourceCard(plan) + '</section>'
-          + (flaggedTotal
+          + (flaggedTotal && team()
               ? '<div class="local-note">' + icon("alert") + '<span><strong>' + flaggedTotal + ' satır insan kontrolü bekliyor.</strong> Kaynak sayfa aynı dersi birden çok tipte listelediği için hangisinin geçerli olduğu belgeden okunamadı.</span></div>'
               : "")
-          + '<div class="local-note">' + icon("info") + '<span><strong>AKTS ve kredi gösterilmiyor:</strong> kaynak ders planı tablosunda kredi sütunu yok. Mezuniyet kredisi bu ekrandan hesaplanamaz.</span></div>'
+          + (team() ? '<div class="local-note">' + icon("info") + '<span><strong>AKTS ve kredi gösterilmiyor:</strong> kaynak ders planı tablosunda kredi sütunu yok. Mezuniyet kredisi bu ekrandan hesaplanamaz.</span></div>' : '')
           + '<div class="local-note">' + icon("info") + '<span>Ders planı, haftalık ders programından farklıdır: burada hangi dersi alacağın yazar, hangi saatte göreceğin yazmaz. Seçmeli ders havuzunun tamamı listelenir; hepsini almayacaksın.</span></div>';
 
         screen.innerHTML = layout(html, "", true);
@@ -5484,13 +5558,15 @@
         if (type === "source") {
           var department = currentDepartment();
           var sourceUrl = safeOfficialUrl(department.sourceUrl || department.directoryUrl);
-          title = "Veri ayrıntısı";
-          body = '<div class="sheet-copy"><p><strong>Program:</strong> ' + escapeHtml(department.name) + '</p><p><strong>Durum:</strong> ' + escapeHtml(statusCopy(department)) + '.</p>' + (team() ? '<p><strong>Katalog kontrolü:</strong> ' + escapeHtml(department.observedAt) + '</p>' : '') + '<p>' + (team() ? 'Ders satırları yalnızca kaynak ve insan kontrolü tamamlanınca öğrenciye kesin veri olarak sunulacaktır.' : 'Kontrol tamamlanana kadar saat ve dersliği resmî belgeyle karşılaştırman önerilir.') + '</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">NÖHÜ kaynağını aç</a>';
+          title = team() ? "Veri ayrıntısı" : "Resmî kaynak";
+          body = !team()
+            ? '<div class="sheet-copy"><p><strong>' + escapeHtml(department.name) + '</strong></p><p>Ders programı ve duyurular bölümünün resmî sayfasında yayımlanır.</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">Bölüm sayfasını aç</a>'
+            : '<div class="sheet-copy"><p><strong>Program:</strong> ' + escapeHtml(department.name) + '</p><p><strong>Durum:</strong> ' + escapeHtml(statusCopy(department)) + '.</p>' + (team() ? '<p><strong>Katalog kontrolü:</strong> ' + escapeHtml(department.observedAt) + '</p>' : '') + '<p>' + (team() ? 'Ders satırları yalnızca kaynak ve insan kontrolü tamamlanınca öğrenciye kesin veri olarak sunulacaktır.' : 'Kontrol tamamlanana kadar saat ve dersliği resmî belgeyle karşılaştırman önerilir.') + '</p></div><a class="primary-button" style="width:100%" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">NÖHÜ kaynağını aç</a>';
         } else if (type === "exam") {
           title = "Ara sınav";
           body = examSheetHtml((examData.exams || []).find(function (e) { return e.exam_id === state.examId; }));
         } else if (type === "record-source") {
-          title = "Kayıt künyesi";
+          title = team() ? "Kayıt künyesi" : "Resmî ders programı";
           body = recordSourceSheetHtml(
             myCoursePool().find(function (item) { return item.id === state.detailCourse; })
             || selectedCourses()[0]
@@ -5596,19 +5672,19 @@
             body += '<p><strong>' + escapeHtml(picked.title) + '</strong></p>'
               + '<p>' + escapeHtml(eventDateLabel(picked)) + ' · ' + escapeHtml(eventCountdown(picked)) + '</p>'
               + '<p><strong>Yarıyıl:</strong> ' + escapeHtml(picked.term === "bahar" ? "Bahar" : (picked.term === "yaz" ? "Yaz" : "Güz")) + '</p>'
-              + '<p><strong>Belgedeki yeri:</strong> ' + escapeHtml(picked.page || "belirtilmemiş") + '</p>';
+              + (team() ? '<p><strong>Belgedeki yeri:</strong> ' + escapeHtml(picked.page || "belirtilmemiş") + '</p>' : '');
           }
           body += (team() ? '<p><strong>Kaynak:</strong> ' + escapeHtml(cs.source_version_id || "bilinmiyor") + '</p>'
             + '<p><strong>Arşive alınma:</strong> ' + escapeHtml(isoDateLabel(cs.fetched_at) || "bilinmiyor") + '</p>'
             + '<p><strong>Durum:</strong> ' + escapeHtml(statusLabel(cs.verification_status)) + ' — insan kontrolünden geçmedi.</p>'
-            : '<p><strong>Kaynak:</strong> NÖHÜ senato kararı (akademik takvim) · son kontrol ' + escapeHtml(isoDateLabel(cs.fetched_at) || "bilinmiyor") + '</p><p>Tarihler henüz bir insan tarafından kontrol edilmedi.</p>')
-            + '<p>Tarihler senato kararının kendi metninden okundu. Kesin bilgi için belgeyi aç; değişiklik olabilir.</p></div>'
+            : '<p>NÖHÜ Senatosunun kabul ettiği 2026-2027 akademik takviminden.</p>')
+            + (team() ? '<p>Tarihler senato kararının kendi metninden okundu. Kesin bilgi için belgeyi aç; değişiklik olabilir.</p>' : '') + '</div>'
             + (cs.source_document_url
                 ? '<a class="primary-button" style="width:100%" href="' + escapeHtml(safeOfficialUrl(cs.source_document_url)) + '" target="_blank" rel="noopener noreferrer">Akademik takvim belgesini aç</a>'
                 : '');
         } else if (type === "announcement") {
           var am = sourceMeta(state.announcementSource) || sourceMeta(Object.keys(offeringSources)[0]);
-          title = "Kaynak duyurusu";
+          title = team() ? "Kaynak duyurusu" : "Ders programı duyurusu";
           if (!am) {
             body = '<p class="sheet-copy">Kaynak künyesi bulunamadı.</p>';
           } else {
@@ -5619,10 +5695,10 @@
               + (team() ? '<p><strong>Belge:</strong> ' + escapeHtml(am.source_version_id) + '</p>'
               + '<p><strong>Tür:</strong> ' + escapeHtml(am.source_type) + '</p>' : '<p><strong>' + escapeHtml(Object.keys(amUnits).join(", ")) + '</strong> haftalık ders programı</p>')
               + '<p><strong>Yayım tarihi:</strong> ' + escapeHtml(isoDateLabel(am.source_published_at) || "bilinmiyor") + '</p>'
-              + '<p><strong>' + (team() ? 'Arşive alınma' : 'Son kontrol') + ':</strong> ' + escapeHtml(isoDateLabel(am.fetched_at) || "bilinmiyor") + '</p>'
+              + (team() ? '<p><strong>Arşive alınma:</strong> ' + escapeHtml(isoDateLabel(am.fetched_at) || "bilinmiyor") + '</p>' : '')
               + (team() ? '<p><strong>Beslediği kayıt:</strong> ' + amRows.length + ' oturum · ' + Object.keys(amUnits).length + ' program</p>' : '')
               + (team() && am.notes ? '<p><strong>Ayrıştırma notu:</strong> ' + escapeHtml(am.notes) + '</p>' : "")
-              + '<p>Belgenin tamamı kopyalanmaz; burada yalnız künyesi ve bağlantısı gösterilir.</p></div>'
+              + (team() ? '<p>Belgenin tamamı kopyalanmaz; burada yalnız künyesi ve bağlantısı gösterilir.</p>' : '') + '</div>'
               + '<a class="primary-button" style="width:100%" href="' + escapeHtml(safeOfficialUrl(am.source_document_url)) + '" target="_blank" rel="noopener noreferrer">Kaynak belgeyi aç</a>'
               + (am.announcement_url && am.announcement_url !== am.source_document_url
                   ? '<a class="secondary-button" style="width:100%;margin-top:8px" href="' + escapeHtml(safeOfficialUrl(am.announcement_url)) + '" target="_blank" rel="noopener noreferrer">Duyuru sayfasını aç</a>'
@@ -5663,21 +5739,21 @@
                 : '<div class="empty-state"><h3>Seçili ders yok</h3><p>Önce programına ders ekle.</p></div>');
         } else if (type === "report") {
           title = "Hatalı bilgi bildir";
-          body = '<p class="sheet-copy">Uygulama hiçbir şeyi kendisi göndermez. Aşağıdaki metin dersin kaynak künyesiyle üretilir; <strong>E-postayla gönder</strong> e-posta uygulamanı hazır metinle açar. Notların, devamsızlığın ve seçtiğin diğer dersler metne eklenmez.</p>'
+          body = '<p class="sheet-copy">Uygulama hiçbir şeyi kendisi göndermez. Aşağıdaki metin dersin bilgileriyle hazırlanır; <strong>E-postayla gönder</strong> e-posta uygulamanı hazır metinle açar. Notların, devamsızlığın ve seçtiğin diğer dersler metne eklenmez.</p>'
             + '<div class="field"><label for="report-text">Sorunu kısaca açıkla</label><input id="report-text" class="search-input" placeholder="Örn. derslik değişmiş"></div>'
             + '<a class="primary-button" style="width:100%" data-mail="report" href="' + escapeHtml(mailtoHref(reportSubject(), reportText())) + '">' + icon("alert") + ' E-postayla gönder</a>'
             + '<textarea id="report-out" class="code-area" readonly style="margin-top:12px" data-filename="unikapsul-bildirim.txt" aria-label="Bildirim metni">' + escapeHtml(reportText()) + '</textarea>'
             + copyArea("report-out", "Metni kopyala")
             + '<p class="sheet-copy" style="margin-top:12px">E-posta uygulaman açılmazsa metni kopyalayıp bu adrese gönder:</p>'
             + contactAddress()
-            + '<p class="sheet-copy">Bilgi resmî belgede de yanlışsa düzeltmeyi yalnız ilgili birim yapabilir; biz belgeyle karşılaştırıp kaydı “insan kontrolü bekliyor” olarak işaretleriz.</p>';
+            + '<p class="sheet-copy">Bildirimini resmî belgeyle karşılaştırıp düzeltiriz. Bilgi resmî belgede de yanlışsa düzeltmeyi ilgili birim yapar.</p>';
         } else if (type === "privacy") {
           title = "Gizlilik ve yasal bilgiler";
           body = '<div class="sheet-copy">'
             + '<p><strong>' + escapeHtml(INDEPENDENCE_NOTE) + '</strong> Üniversiteyle bir bağı, onayı ya da ortaklığı yoktur. Resmî bilgi için her kaydın altındaki kaynak belgeyi aç.</p>'
             + '<p><strong>Verin telefonundan çıkmaz.</strong> Hesap yok, sunucu yok, analitik ve reklam yok. Seçtiğin dersler, notların ve devamsızlığın yalnız bu cihazın tarayıcısında saklanır; uygulama hiçbir adrese veri göndermez. Tarayıcı verisini silersen bunlar da silinir — <strong>Programı yedekle</strong> ile kopyasını alabilirsin.</p>'
             + '<p>OBS şifresi, T.C. kimlik numarası, öğrenci numarası, transkript veya ödeme bilgisi istenmez. İsteyen bir sürümle karşılaşırsan o sürüm bizim değildir.</p>'
-            + '<p><strong>Kaynaklar.</strong> Ders programı, sınav programı, akademik takvim, ders planı ve yemek listesi üniversitenin herkese açık sayfalarındaki belgelerden alınır; her kayıtta belge, sayfa ve alınma tarihi yazar. Bilgiler insan kontrolünden geçmemiştir; çelişki olursa resmî belge geçerlidir.</p>'
+            + '<p><strong>Kaynaklar.</strong> Ders programı, sınav programı, akademik takvim, ders planı ve yemek listesi üniversitenin herkese açık sayfalarındaki belgelerden alınır ve her derste resmî belgeye bağlantı vardır. Bir çelişki olursa üniversitenin resmî belgesi geçerlidir.</p>'
             + '<p><strong>Öğretim elemanı adları</strong> resmî ders programında yazdığı gibi gösterilir. Kişi hakkında yorum, puan ya da arama yoktur.</p>'
             + '<p><strong>Bize e-posta gönderirsen</strong> adresin ve yazdıkların yalnız yanıt vermek ve bildirdiğin hatayı düzeltmek için kullanılır, başkasıyla paylaşılmaz.</p>'
             + '</div>'
@@ -5685,7 +5761,7 @@
         } else if (type === "contact") {
           title = "İletişim, düzeltme ve kaldırma";
           body = '<div class="sheet-copy">'
-            + '<p><strong>Hatalı bilgi.</strong> Bir dersin ayrıntısındaki <strong>Hatalı bilgi bildir</strong> düğmesi, kaydın kaynak künyesini içeren hazır bir e-posta açar. Bildirimi resmî belgeyle karşılaştırırız; fark varsa kaydı düzeltir ya da “insan kontrolü bekliyor” olarak işaretleriz.</p>'
+            + '<p><strong>Hatalı bilgi.</strong> Bir dersin ayrıntısındaki <strong>Hatalı bilgi bildir</strong> düğmesi, dersin bilgilerini içeren hazır bir e-posta açar. Bildirimi resmî belgeyle karşılaştırır, fark varsa düzeltiriz.</p>'
             + '<p><strong>Adının kaldırılması (öğretim elemanları).</strong> Adın, resmî ders programında yazdığı biçimde gösteriliyor. Gösterilmesini istemiyorsan konu satırına <strong>[Kaldırma]</strong> yazıp bu adrese e-posta gönder: hangi bölümün programında geçtiğini yazman yeterli. <strong>48 saat içinde</strong> yanıt veririz ve adın bir sonraki güncellemede bütün kayıtlardan çıkarılır; ders kaydı “öğretim elemanı gösterilmiyor” olarak kalır. Gerekçe istemeyiz.</p>'
             + '<p><strong>Üniversite birimleri.</strong> Bir bilginin yayımlanmasına itiraz ediyorsanız aynı adrese yazın; itiraz gelen bölüm, görüşme sonuçlanana kadar uygulamada gösterilmez.</p>'
             + '</div>'
