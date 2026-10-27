@@ -6920,18 +6920,24 @@
         }
         if (action === "pick-searched-dept") {
           var btn = target.closest('[data-action="pick-searched-dept"]');
-          var deptId = btn.getAttribute("data-dept-id");
-          var facId = btn.getAttribute("data-faculty-id");
-          if (deptId && facId) {
-            state.faculty = facId;
-            state.department = deptId;
-            state.grade = defaultGrade(departments[deptId]);
-            state.setup = state.setup || {};
+          var deptId = btn ? btn.getAttribute("data-dept-id") : null;
+          var nextDepartment = deptId && departments[deptId];
+          if (nextDepartment) {
+            state.faculty = nextDepartment.facultyId;
+            state.department = nextDepartment.id;
+            state.grade = 1;
+            if (!state.setup) state.setup = {};
             state.setup.faculty = true;
             state.setup.department = true;
             state.setup.grade = true;
+            keepSecondSelections();
+            state.day = nextDepartment.defaultDay || "Pazartesi";
+            state.detailCourse = (nextDepartment.conflictPair && nextDepartment.conflictPair[0]) || "";
+            state.query = "";
+            state.courseFilter = "grade";
             persist();
             renderOnboardingOne();
+            toast(nextDepartment.name + " seçildi.");
           }
           return;
         }

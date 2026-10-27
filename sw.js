@@ -11,8 +11,8 @@
  */
 "use strict";
 
-// v6 (2026-10-27): Gündem sekmesinden yemekhane çipi ve menüsü tamamen kaldırıldı; eski önbellek silinir.
-var CACHE = "unikapsul-v6";
+// v7 (2026-10-28): Hızlı bölüm arama seçimi düzeltildi (defaultGrade hatası giderildi).
+var CACHE = "unikapsul-v7";
 var ASSETS = [
   "./",
   "index.html",
