@@ -73,18 +73,131 @@
       min-height: 100vh;
       min-height: 100dvh;
       display: grid;
-      grid-template-columns: minmax(250px, 320px) minmax(390px, 430px);
-      gap: 42px;
+      grid-template-columns: minmax(320px, 420px) minmax(390px, 430px);
+      gap: 52px;
       justify-content: center;
       align-items: center;
-      padding: 30px;
+      padding: 32px 24px;
     }
 
-    html:not(.team-view) .prototype-panel { display: none; }
-    html:not(.team-view) .prototype-page { grid-template-columns: minmax(390px, 430px); }
     .prototype-panel {
       align-self: center;
-      max-width: 320px;
+      max-width: 420px;
+    }
+
+    html.team-view .showcase-panel-content { display: none; }
+    html:not(.team-view) .team-panel-content { display: none; }
+
+    @media (max-width: 919px) {
+      .prototype-panel { display: none !important; }
+      .prototype-page {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 0;
+        gap: 0;
+      }
+    }
+
+    /* Dokunma hissiyatı ve mikro etkileşimler */
+    button, .timeline-card, .list-card, .feature-card, .info-card, .tile, .weekday, .dept-chip, .nav-button, .segment, .chip {
+      transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1), background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active, .timeline-card:active, .list-card:active, .feature-card:active, .info-card:active, .tile:active, .dept-chip:active {
+      transform: scale(0.975);
+    }
+    .nav-button:active {
+      transform: scale(0.90);
+    }
+    .weekday:active, .segment:active, .chip:active {
+      transform: scale(0.94);
+    }
+
+    /* Vitrin (Showcase) Masaüstü Stilleri */
+    .showcase-title {
+      margin: 16px 0 10px;
+      font-size: clamp(28px, 3.2vw, 38px);
+      line-height: 1.12;
+      font-weight: 850;
+      letter-spacing: -.035em;
+      color: var(--ink);
+    }
+    .showcase-desc {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .showcase-features {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .showcase-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 2px 8px rgba(16, 29, 63, .03);
+    }
+    .showcase-feature .sf-icon {
+      font-size: 20px;
+      line-height: 1;
+      padding: 8px;
+      border-radius: 12px;
+      background: var(--primary-2);
+      flex-shrink: 0;
+    }
+    .showcase-feature strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 750;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .showcase-feature span {
+      display: block;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .showcase-qr-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--surface) 0%, var(--primary-2) 100%);
+      border: 1px solid var(--line);
+      box-shadow: 0 4px 18px rgba(16, 29, 63, .04);
+    }
+    .showcase-qr-card .qr-box {
+      background: #fff;
+      padding: 6px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+    .showcase-qr-card .qr-copy strong {
+      display: block;
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 750;
+      margin-bottom: 3px;
+    }
+    .showcase-qr-card .qr-copy span {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .showcase-qr-card .qr-copy code {
+      font-family: inherit;
+      font-weight: 700;
+      color: var(--primary);
     }
 
     .eyebrow {
@@ -405,10 +518,85 @@
       align-items: stretch;
     }
     .time {
-      padding-top: 13px;
+      padding-top: 11px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1.35;
+      letter-spacing: -.02em;
+    }
+    .hero-glance {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .glance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 780;
+      letter-spacing: -.01em;
+    }
+    .glance-badge .icon { width: 14px; height: 14px; }
+    .glance-time {
+      background: var(--chip-on-tint);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .glance-room {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 850;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+    }
+    .glance-dim {
+      background: var(--chip-on-tint);
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.35;
+    }
+    .room-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--primary-2);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      vertical-align: middle;
+      letter-spacing: -.01em;
+    }
+    .search-results {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 28px rgba(0,0,0,.18);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .search-result-item {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .search-result-item:hover, .search-result-item:focus {
+      background: var(--primary-2);
     }
     .rail { position: relative; display: flex; justify-content: center; }
     .rail::before { content: ""; position: absolute; top: 21px; bottom: -15px; width: 2px; background: #b7d9d6; }
@@ -501,16 +689,24 @@
       display: grid;
       grid-template-columns: 38px minmax(0, 1fr) auto;
       align-items: center;
-      gap: 11px;
+      gap: 12px;
       margin: 12px 0;
-      padding: 13px;
-      border: 1px solid var(--red);
-      border-radius: 16px;
-      background: var(--red-2);
-      color: var(--red);
+      padding: 14px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+      color: #dc2626;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.05);
     }
-    .alert-card strong { display: block; font-size: 13px; }
-    .alert-card span { display: block; margin-top: 3px; font-size: 12px; color: var(--red); }
+    .alert-card strong { display: block; font-size: 14px; font-weight: 800; color: #dc2626; }
+    .alert-card span { display: block; margin-top: 3px; font-size: 12.5px; color: #b91c1c; opacity: .9; }
+    [data-app-theme="dark"] .alert-card {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+    [data-app-theme="dark"] .alert-card strong { color: #fca5a5; }
+    [data-app-theme="dark"] .alert-card span { color: #f87171; }
 
     .state-banner {
       display: flex;
@@ -1834,20 +2030,89 @@
 </head>
 <body>
   <div class="prototype-page">
-    <aside class="prototype-panel" aria-label="Prototip test kontrolleri">
-      <span class="eyebrow">● Faz 0 · Yerel prototip</span>
-      <h1>ÜniKapsül görev testi</h1>
-      <p>Ders kayıtları aday veridir. Yemekhane kartı, resmî aylık listedeki kaynak gözlemini gösterir; prototip hâlâ resmî bir üniversite hizmeti değildir.</p>
-      <div class="test-controls">
-        <strong>Durum simülasyonu</strong>
-        <small>Uyarıların yalnız gerektiğinde göründüğünü kontrol et.</small>
-        <div class="control-row">
-          <button class="test-button active" data-test-mode="fresh">Normal</button>
-          <button class="test-button" data-test-mode="offline">Çevrimdışı</button>
-          <button class="test-button" data-test-mode="stale">Eski veri</button>
-          <button class="test-button" data-action="toggle-conflict">Çakışma ekle</button>
+    <aside class="prototype-panel" aria-label="Prototip tanıtım ve kontrolleri">
+      <div class="team-panel-content">
+        <span class="eyebrow">● Faz 0 · Ekip Görünümü</span>
+        <h1>ÜniKapsül görev testi</h1>
+        <p>Ders kayıtları aday veridir. Yemekhane kartı, resmî aylık listedeki kaynak gözlemini gösterir; prototip hâlâ resmî bir üniversite hizmeti değildir.</p>
+        <div class="test-controls">
+          <strong>Durum simülasyonu</strong>
+          <small>Uyarıların yalnız gerektiğinde göründüğünü kontrol et.</small>
+          <div class="control-row">
+            <button class="test-button active" data-test-mode="fresh">Normal</button>
+            <button class="test-button" data-test-mode="offline">Çevrimdışı</button>
+            <button class="test-button" data-test-mode="stale">Eski veri</button>
+            <button class="test-button" data-action="toggle-conflict">Çakışma ekle</button>
+          </div>
+          <button class="test-button" data-action="reset-prototype">Kurulumu sıfırla</button>
         </div>
-        <button class="test-button" data-action="reset-prototype">Kurulumu sıfırla</button>
+      </div>
+
+      <div class="showcase-panel-content">
+        <div class="showcase-brand">
+          <span class="eyebrow">🎓 NÖHÜ Kampüs Asistanı</span>
+          <h1 class="showcase-title">Kampüs cebinde,<br>her şey anında elinin altında.</h1>
+          <p class="showcase-desc">NÖHÜ öğrencileri için amfi yolunda hızlı, hafif ve sıfır sürtünmeli mobil web deneyimi.</p>
+        </div>
+
+        <div class="showcase-features">
+          <div class="showcase-feature">
+            <div class="sf-icon">⚡</div>
+            <div>
+              <strong>Kayıtsız & Anında Kullanım</strong>
+              <span>Hesap açma, şifre veya OBS girişi yok; bölümünü seç ve doğrudan başla.</span>
+            </div>
+          </div>
+          <div class="showcase-feature">
+            <div class="sf-icon">📶</div>
+            <div>
+              <strong>%100 Çevrimdışı Uyumlu</strong>
+              <span>İnternet çekmeyen amfilerde bile ders programın ve menün anında hazır.</span>
+            </div>
+          </div>
+          <div class="showcase-feature">
+            <div class="sf-icon">🍽️</div>
+            <div>
+              <strong>Günün Yemekhane Menüsü</strong>
+              <span>Kalori, yemek listesi ve sıradaki günün menüsü tek bakışta cebinde.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase-qr-card">
+          <div class="qr-box">
+            <svg viewBox="0 0 100 100" class="qr-svg" width="68" height="68">
+              <rect width="100" height="100" fill="#ffffff" rx="8"/>
+              <rect x="10" y="10" width="28" height="28" fill="#101d3f" rx="4"/>
+              <rect x="14" y="14" width="20" height="20" fill="#ffffff" rx="2"/>
+              <rect x="18" y="18" width="12" height="12" fill="#101d3f" rx="2"/>
+              <rect x="62" y="10" width="28" height="28" fill="#101d3f" rx="4"/>
+              <rect x="66" y="14" width="20" height="20" fill="#ffffff" rx="2"/>
+              <rect x="70" y="18" width="12" height="12" fill="#101d3f" rx="2"/>
+              <rect x="10" y="62" width="28" height="28" fill="#101d3f" rx="4"/>
+              <rect x="14" y="66" width="20" height="20" fill="#ffffff" rx="2"/>
+              <rect x="18" y="70" width="12" height="12" fill="#101d3f" rx="2"/>
+              <rect x="44" y="12" width="6" height="6" fill="#3168d5"/>
+              <rect x="52" y="18" width="6" height="6" fill="#101d3f"/>
+              <rect x="44" y="26" width="6" height="6" fill="#101d3f"/>
+              <rect x="12" y="44" width="6" height="6" fill="#101d3f"/>
+              <rect x="22" y="48" width="6" height="6" fill="#3168d5"/>
+              <rect x="44" y="44" width="12" height="12" fill="#3168d5" rx="2"/>
+              <rect x="60" y="44" width="6" height="6" fill="#101d3f"/>
+              <rect x="70" y="48" width="6" height="6" fill="#101d3f"/>
+              <rect x="80" y="44" width="8" height="6" fill="#101d3f"/>
+              <rect x="48" y="62" width="6" height="6" fill="#101d3f"/>
+              <rect x="56" y="70" width="8" height="6" fill="#3168d5"/>
+              <rect x="44" y="80" width="6" height="8" fill="#101d3f"/>
+              <rect x="68" y="66" width="8" height="8" fill="#101d3f"/>
+              <rect x="80" y="76" width="8" height="8" fill="#3168d5"/>
+            </svg>
+          </div>
+          <div class="qr-copy">
+            <strong>Telefonda Deneyimle</strong>
+            <span>Kameranla karekodu tara veya aç:<br><code>unikapsul.github.io</code></span>
+          </div>
+        </div>
       </div>
     </aside>
 
@@ -2164,13 +2429,13 @@
           dayLong: offering.day,
           start: offering.start_time,
           end: offering.end_time,
-          location: offering.classroom_raw,
-          instructor: offering.instructor_name_raw || "",
+          location: (offering.classroom_raw || "").replace(/Belgede kodla yaz\u0131lm\u0131\u015f:\s*/gi, "").trim(),
+          instructor: (offering.instructor_name_raw || "").replace(/Belgede kodla yaz\u0131lm\u0131\u015f:\s*/gi, "").trim(),
           grade: offering.grade_normalized,
           // Lisansüstünde sınıf yoktur; ADR-0005 gereği aşama taşınır.
           stage: offering.stage_normalized || "",
           elective: offering.is_elective,
-          branch: offering.section || "",
+          branch: (offering.section || "").replace(/Belgede kodla yaz\u0131lm\u0131\u015f:\s*/gi, "").trim(),
           departmentName: department.name,
           facultyName: faculty.name,
           // Kaynak izlenebilirliği projenin asıl iddiası; kayıt üzerindeki
@@ -3514,18 +3779,29 @@
        * Yalnız kısaltma kodu ("YG") ad gibi sunulmaz. Kişi hakkında yorum,
        * puan ya da kişiye göre arama yoktur (legal-safety-contract.md §3).
        */
+      function cleanDebugCopy(val) {
+        if (!val) return "";
+        return String(val).replace(/Belgede kodla yaz\u0131lm\u0131\u015f:\s*/gi, "").trim();
+      }
+
+      /*
+       * Öğretim elemanı (2026-10-20, kullanıcı kararı: görünsün). Değer resmî
+       * belgede nasıl yazıyorsa öyle gösterilir; tamamlanmaz, düzeltilmez.
+       * Yalnız kısaltma kodu ("YG") ad gibi sunulmaz. Kişi hakkında yorum,
+       * puan ya da kişiye göre arama yoktur (legal-safety-contract.md §3).
+       */
       function instructorCopy(value) {
-        var v = String(value || "").trim();
+        var v = cleanDebugCopy(value);
         if (!v || v === "Kaynakta belirtilmemiş") return "Belgede yazmıyor";
         // Kaldırma talebi (legal-safety-contract.md §5): yayın paketi adı bu işaretle değiştirir.
         if (v === REMOVED_NAME) return "Öğretim elemanı gösterilmiyor";
         if (v.indexOf(REMOVED_NAME) !== -1) return v.split(REMOVED_NAME).join("(gösterilmiyor)");
-        if (/^[A-ZÇĞİÖŞÜ]{2,4}([ \/,-]+[A-ZÇĞİÖŞÜ]{2,4})*$/.test(v) || /^[\d ,\/()-]+$/.test(v)) return "Belgede kodla yazılmış: " + v;
         return v;
       }
 
       function placeCopy(course) {
-        return course.location ? " · " + escapeHtml(course.location) : (team() ? " · Derslik kaynakta yazmıyor" : "");
+        var loc = cleanDebugCopy(course.location);
+        return loc ? " · " + escapeHtml(loc) : (team() ? " · Derslik kaynakta yazmıyor" : "");
       }
 
       function gradeCopy(course) {
@@ -3534,7 +3810,8 @@
       }
 
       function branchCopy(course) {
-        return course.branch ? " · " + escapeHtml(course.branch) + " şubesi" : "";
+        var br = cleanDebugCopy(course.branch);
+        return br ? " · " + escapeHtml(br) + " şubesi" : "";
       }
 
       function courseCodeCopy(course) {
@@ -3607,11 +3884,13 @@
       }
 
       function stateBanner() {
-        if (typeof navigator !== "undefined" && navigator.onLine === false) {
-          return '<div class="state-banner">' + icon("cloud") + '<span><strong>Çevrimdışısın.</strong> Bilgiler bu cihazda en son açıldığı andaki hâliyle gösteriliyor; o andan sonraki değişiklikler görünmez.</span></div>';
-        }
-        if (state.dataMode === "offline") {
-          return '<div class="state-banner">' + icon("cloud") + '<span><strong>Çevrimdışısın.</strong> Son kaydedilen örnek program gösteriliyor; güncel olduğu iddia edilmiyor.</span></div>';
+        var isDismissed = false;
+        try { isDismissed = sessionStorage.getItem("dismissed_offline_banner") === "true"; } catch (e) {}
+        if (state.dismissedOfflineBanner || isDismissed) return "";
+
+        var isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+        if (isOffline) {
+          return '<div class="state-banner">' + icon("cloud") + '<span><strong>Çevrimdışısın.</strong> Bilgiler bu cihazda en son açıldığı andaki hâliyle gösteriliyor; o andan sonraki değişiklikler görünmez.</span><button class="banner-close" data-action="dismiss-offline-banner" aria-label="Kapat" style="background:transparent;border:0;color:inherit;font-size:18px;line-height:1;cursor:pointer;padding:0 4px;margin-left:auto">&times;</button></div>';
         }
         if (state.dataMode === "stale") {
           return '<div class="state-banner">' + icon("alert") + '<span><strong>Programın yeniden kontrol edilmeli.</strong> Son kontrol 7 gün önce yapıldı.</span></div>';
@@ -3640,6 +3919,12 @@
           + '<div class="onboarding-copy"><h1>Programını kendine göre hazırla</h1><p>Kayıt olmadan akademik birimini, programını ve sınıf ya da program aşamanı seç. Seçimlerini daha sonra değiştirebilirsin.</p></div>'
           + '<div class="local-note">' + icon("shield") + '<span>' + escapeHtml(INDEPENDENCE_NOTE) + '</span></div>'
           + '<div class="form-card">'
+          + '<div class="field" style="margin-bottom:12px">'
+          + '<label for="dept-quick-search">Bölüm / Program Hızlı Ara</label>'
+          + '<div style="position:relative">'
+          + '<input id="dept-quick-search" class="search-input" type="search" placeholder="Örn: Bilgisayar, Hemşirelik, Aşçılık, Tarih..." autocomplete="off" aria-label="Bölüm ara">'
+          + '<div id="dept-search-results" class="search-results hidden"></div>'
+          + '</div></div>'
           + fieldStatic("Üniversite", "Niğde Ömer Halisdemir Üniversitesi")
           + fieldSelect("Akademik birim", "faculty-select", faculties, setupDone("faculty") ? state.faculty : null, "Akademik birimini seç")
           + fieldSelect("Program / Bölüm", "department-select", setupDone("faculty") ? departmentOptions : [], setupDone("department") ? state.department : null, setupDone("faculty") ? "Bölümünü seç" : "Önce akademik birimi seç")
@@ -4263,14 +4548,36 @@
           + icon("chevron") + '</button></section>';
       }
 
+      function timeToMinutes(t) {
+        if (!t) return null;
+        var m = String(t).match(/(\d{1,2})[:.](\d{2})/);
+        if (!m) return null;
+        return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      }
+
+      function nowInMinutes() {
+        try {
+          var parts = new Intl.DateTimeFormat("en-GB", {
+            timeZone: "Europe/Istanbul", hour: "numeric", minute: "numeric", hour12: false
+          }).formatToParts(new Date());
+          var h = 0, m = 0;
+          parts.forEach(function (part) {
+            if (part.type === "hour") h = parseInt(part.value, 10);
+            if (part.type === "minute") m = parseInt(part.value, 10);
+          });
+          return h * 60 + m;
+        } catch (e) {
+          var d = new Date();
+          return d.getHours() * 60 + d.getMinutes();
+        }
+      }
+
       // Türkiye saatine göre "şu an" — kart saate göre seçilir.
       function turkeyClock() {
-        var parts = new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit", hour12: false
-        }).formatToParts(new Date());
-        var values = {};
-        parts.forEach(function (part) { values[part.type] = part.value; });
-        return values.hour + ":" + values.minute;
+        var min = nowInMinutes();
+        var h = Math.floor(min / 60);
+        var m = min % 60;
+        return (h < 10 ? "0" + h : "" + h) + ":" + (m < 10 ? "0" + m : "" + m);
       }
 
       function todayShortDay() {
@@ -4290,7 +4597,7 @@
        */
       function coursesOnDay(day) {
         return selectedCourses().filter(function (course) { return course.day === day && course.start; })
-          .sort(function (a, b) { return a.start.localeCompare(b.start); });
+          .sort(function (a, b) { return (timeToMinutes(a.start) || 0) - (timeToMinutes(b.start) || 0); });
       }
 
       /*
@@ -4326,18 +4633,32 @@
       }
 
       function medPlan() {
-        var today = turkeyDateIso(), now = turkeyClock();
-        var list = medList(today);
-        var running = list.find(function (s) { return s.start <= now && now < s.end; });
-        if (running) return { session: running, label: "ŞU AN DEVAM EDEN", list: list, date: today, isToday: true };
-        var upcoming = list.find(function (s) { return s.start > now; });
-        if (upcoming) return { session: upcoming, label: "SIRADAKİ DERS", list: list, date: today, isToday: true };
+        var today = turkeyDateIso(), nowMin = nowInMinutes();
+        var list = medList(today).sort(function (a, b) { return (timeToMinutes(a.start) || 0) - (timeToMinutes(b.start) || 0); });
+        var running = list.find(function (s) {
+          var sMin = timeToMinutes(s.start), eMin = timeToMinutes(s.end);
+          return sMin !== null && eMin !== null && sMin <= nowMin && nowMin < eMin;
+        });
+        if (running) {
+          var remMin = (timeToMinutes(running.end) || 0) - nowMin;
+          var remStr = remMin >= 60 ? (Math.floor(remMin / 60) + " sa" + (remMin % 60 ? " " + (remMin % 60) + " dk" : "") + " kaldı") : (remMin + " dk kaldı");
+          return { session: running, label: "ŞU AN DERSTESİN: " + running.title + " (" + remStr + ")", list: list, date: today, isToday: true };
+        }
+        var upcoming = list.find(function (s) {
+          var sMin = timeToMinutes(s.start);
+          return sMin !== null && sMin > nowMin;
+        });
+        if (upcoming) return { session: upcoming, label: "SIRADAKİ DERS: " + upcoming.title + " · Saat " + upcoming.start, list: list, date: today, isToday: true };
         var next = medDates(addDaysIso(today, 1), 1)[0];
-        if (!next) return { session: null, label: "", list: list, date: today, isToday: true };
-        var nextList = medList(next);
-        var reason = list.length ? "BUGÜNKÜ DERSLERİN BİTTİ" : (isoWeekday(today) ? "BUGÜN DERSİN YOK" : "HAFTA SONU");
-        return { session: nextList[0], label: reason + " · " + (next === addDaysIso(today, 1) ? "YARIN" : diningDateLabel(next).toLocaleUpperCase("tr-TR")) + " İLK DERS",
-                 list: list, nextList: nextList, date: next, isToday: false };
+        if (!next) return { session: null, label: list.length ? "BUGÜNKÜ DERSLERİN BİTTİ" : "BUGÜN DERSİN YOK · Dinlenme Zamanı ☕", list: list, date: today, isToday: true };
+        var nextList = medList(next).sort(function (a, b) { return (timeToMinutes(a.start) || 0) - (timeToMinutes(b.start) || 0); });
+        var nextSession = nextList[0];
+        if (list.length) {
+          var whenLabel = next === addDaysIso(today, 1) ? "YARIN" : diningDateLabel(next).toLocaleUpperCase("tr-TR");
+          var startPart = nextSession && nextSession.start ? " " + nextSession.start : "";
+          return { session: nextSession, label: "BUGÜNKÜ DERSLERİN BİTTİ · " + whenLabel + " İLK DERS" + startPart, list: list, nextList: nextList, date: next, isToday: false };
+        }
+        return { session: nextSession, label: "BUGÜN DERSİN YOK · Dinlenme Zamanı ☕", list: list, nextList: nextList, date: next, isToday: false };
       }
 
       function medRow(s, isNext) {
@@ -4362,7 +4683,7 @@
         var s = plan.session;
         var src = medSourceNow();
         var html = brandHeader() + deptChip()
-          + (s ? '<div class="hero-course" style="cursor:default"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(currentDepartment().icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(s.title) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(medDayHeading(plan.date)) + ' · ') + escapeHtml(s.start) + '–' + escapeHtml(s.end) + '</span><span class="hero-sub">' + escapeHtml([s.code, s.instructor].filter(Boolean).join(" · ")) + '</span></span></div></div>'
+          + (s ? '<div class="hero-course" style="cursor:default"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(currentDepartment().icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(s.title) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(medDayHeading(plan.date)) + ' · ') + escapeHtml(s.start) + '–' + escapeHtml(s.end) + '</span><div class="hero-glance"><span class="glance-badge glance-time">' + icon("calendar") + ' ' + escapeHtml(s.start) + '–' + escapeHtml(s.end) + '</span>' + (s.room ? '<span class="glance-badge glance-room">' + escapeHtml(cleanDebugCopy(s.room)) + '</span>' : '') + '</div><span class="hero-sub">' + escapeHtml([s.code, s.instructor].filter(Boolean).join(" · ")) + '</span></span></div></div>'
               : '<div class="empty-state" style="min-height:160px"><span class="icon-tile">' + icon("calendar") + '</span><h3>Yaklaşan ders yok</h3><p>' + escapeHtml(medEmptyCopy()) + '</p></div>');
         var list = plan.isToday ? plan.list : (plan.nextList || []);
         if (list.length) {
@@ -4395,25 +4716,44 @@
         var todayIso = turkeyDateIso();
         var today = isoWeekday(todayIso);
         var list = today ? coursesOnDay(today) : [];
+        var nowMin = nowInMinutes();
         if (list.length) {
-          var now = turkeyClock();
-          var running = list.find(function (course) { return course.start <= now && now < course.end; });
-          if (running) return { course: running, label: "ŞU AN DEVAM EDEN", list: list, isToday: true };
-          var upcoming = list.find(function (course) { return course.start > now; });
-          if (upcoming) return { course: upcoming, label: "SIRADAKİ DERS", list: list, isToday: true };
+          var running = list.find(function (course) {
+            var sMin = timeToMinutes(course.start);
+            var eMin = timeToMinutes(course.end);
+            return sMin !== null && eMin !== null && sMin <= nowMin && nowMin < eMin;
+          });
+          if (running) {
+            var remMin = (timeToMinutes(running.end) || 0) - nowMin;
+            var remStr = remMin >= 60 ? (Math.floor(remMin / 60) + " sa" + (remMin % 60 ? " " + (remMin % 60) + " dk" : "") + " kaldı") : (remMin + " dk kaldı");
+            return { course: running, label: "ŞU AN DERSTESİN: " + running.name + " (" + remStr + ")", list: list, isToday: true };
+          }
+          var upcoming = list.find(function (course) {
+            var sMin = timeToMinutes(course.start);
+            return sMin !== null && sMin > nowMin;
+          });
+          if (upcoming) {
+            return { course: upcoming, label: "SIRADAKİ DERS: " + upcoming.name + " · Saat " + upcoming.start, list: list, isToday: true };
+          }
         }
-        var reason = list.length ? "BUGÜNKÜ DERSLERİN BİTTİ" : (today ? "BUGÜN DERSİN YOK" : "HAFTA SONU");
+        var hasClassesToday = list.length > 0;
         for (var k = 1; k <= 7; k += 1) {
           var iso = addDaysIso(todayIso, k);
           var day = isoWeekday(iso);
           var dayList = day ? coursesOnDay(day) : [];
           if (dayList.length) {
             var when = k === 1 ? "YARIN" : dayLong(day).toLocaleUpperCase("tr-TR");
-            return { course: dayList[0], label: reason + " · " + when + " İLK DERS", list: list, nextList: dayList,
+            var nextCourse = dayList[0];
+            var startPart = nextCourse && nextCourse.start ? " " + nextCourse.start : "";
+            var reason = hasClassesToday
+              ? ("BUGÜNKÜ DERSLERİN BİTTİ · " + when + " İLK DERS" + startPart)
+              : "BUGÜN DERSİN YOK · Dinlenme Zamanı ☕";
+            return { course: nextCourse, label: reason, list: list, nextList: dayList,
                      nextDay: day, nextIso: iso, isToday: false, when: k === 1 ? "Yarın" : dayLong(day) };
           }
         }
-        return { course: null, label: reason, list: list, isToday: false };
+        var emptyLabel = hasClassesToday ? "BUGÜNKÜ DERSLERİN BİTTİ" : "BUGÜN DERSİN YOK · Dinlenme Zamanı ☕";
+        return { course: null, label: emptyLabel, list: list, isToday: false };
       }
 
       function todayHeading() {
@@ -4451,7 +4791,7 @@
           timeline = '<h2>Bugünkü program</h2><button class="text-button" data-route="program">Tümünü gör</button></div><div class="panel"><div class="timeline' + (plan.isToday ? ' has-next' : '') + '">' + plan.list.map(function (course) { return timelineRow(course, plan.isToday && next && course.id === next.id); }).join("") + '</div></div>';
         } else if (plan.nextList) {
           timeline = '<h2>' + escapeHtml(plan.when) + ' · ' + diningDateLabel(plan.nextIso) + '</h2><button class="text-button" data-route="program">Tümünü gör</button></div>'
-            + '<p class="stepper-label" style="margin:0 0 8px">' + (plan.label.indexOf("HAFTA SONU") === 0 ? "Hafta sonu ders yok." : "Bugün seçtiğin derslerden hiçbiri yok.") + ' Ders olan bir sonraki gün:</p>'
+            + '<p class="stepper-label" style="margin:0 0 8px">' + (isoWeekday(turkeyDateIso()) ? "Bugün seçtiğin derslerden hiçbiri yok." : "Hafta sonu ders yok.") + ' Ders olan bir sonraki gün:</p>'
             + '<div class="panel"><div class="timeline">' + plan.nextList.map(function (course) { return timelineRow(course, false); }).join("") + '</div></div>';
         } else {
           timeline = '<h2>Bugünkü program</h2></div>' + emptyProgramCard();
@@ -4462,7 +4802,7 @@
           + (team() ? '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>' : '')
           + stateBanner()
           + (conflict ? '<button class="alert-card" data-route="program"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + escapeHtml(conflict.a.name) + ' ve ' + escapeHtml(conflict.b.name) + ' · ' + escapeHtml(conflict.start) + '–' + escapeHtml(conflict.end) + '</span></span>' + icon("chevron") + '</button>' : "")
-          + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
+          + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><div class="hero-glance"><span class="glance-badge glance-time">' + icon("calendar") + ' ' + escapeHtml(next.start) + '–' + escapeHtml(next.end) + '</span>' + (next.location ? '<span class="glance-badge glance-room">' + escapeHtml(cleanDebugCopy(next.location)) + '</span>' : '') + '</div><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
           + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
           + todayDiningCard()
           + weeklyAbsenceCheck()
@@ -4498,11 +4838,13 @@
             copy = diningCardCopy();
           }
         }
-        return '<section class="section">' + agendaCard("tint-green", "utensils", title, copy, "", 'data-sheet="menu"') + '</section>';
+        return '<section class="section">' + agendaCard("tint-cream", "utensils", title, copy, "", 'data-sheet="menu"') + '</section>';
       }
 
       function timelineRow(course, isNext) {
-        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + confirmChip(course) + '</span><span class="timeline-meta">' + escapeHtml(course.location) + branchCopy(course) + '<br>' + escapeHtml(course.departmentName) + ' · ' + gradeCopy(course) + '</span></span>' + icon("chevron") + '</button></div>';
+        var loc = cleanDebugCopy(course.location);
+        var roomTag = loc ? '<span class="room-tag">' + escapeHtml(loc) + '</span> ' : '';
+        return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span><button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + confirmChip(course) + '</span><span class="timeline-meta">' + roomTag + branchCopy(course) + (roomTag || branchCopy(course) ? '<br>' : '') + escapeHtml(course.departmentName) + ' · ' + gradeCopy(course) + '</span></span>' + icon("chevron") + '</button></div>';
       }
 
       function contextCard(className, iconName, title, copy, sheet) {
@@ -4565,7 +4907,9 @@
 
       function programRow(course, isNext) {
         var who = instructorCopy(course.instructor);
-        var meta = escapeHtml(course.location || (team() ? "Derslik kaynakta yazmıyor" : "")) + branchCopy(course)
+        var loc = cleanDebugCopy(course.location);
+        var roomTag = loc ? '<span class="room-tag">' + escapeHtml(loc) + '</span> ' : (team() ? '<span style="color:var(--muted)">Derslik kaynakta yazmıyor</span>' : "");
+        var meta = roomTag + branchCopy(course)
           + (who && who !== "Belgede yazmıyor" && !course.userEntered ? "<br>" + escapeHtml(who) : "");
         return '<div class="timeline-row' + (isNext ? ' is-next' : '') + '"><span class="time">' + escapeHtml(course.start) + '<br>' + escapeHtml(course.end) + '</span><span class="rail"></span>'
           + '<button class="timeline-card" data-course="' + escapeHtml(course.id) + '"><span class="timeline-main"><span class="timeline-title">' + escapeHtml(course.name) + programTag(course) + confirmChip(course)
@@ -4737,16 +5081,13 @@
         if (tab === "all") {
           var next = upcomingEvents(1)[0];
           var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
-          return '<section class="section" style="margin-top:8px"><div class="section-heading"><h2>Bugün</h2></div><div class="context-grid">'
-            + agendaCard("tint-cream", "utensils", "Yemekhane", diningCardCopy(), team() ? "Kaynak: NÖHÜ aylık yemek listesi · gözlem " + diningObservedLabel() : "", 'data-sheet="menu"')
-            + '</div></section>'
-            + '<section class="section"><div class="section-heading"><h2>Son güncellemeler</h2></div><div class="context-grid">'
+          return '<section class="section" style="margin-top:8px"><div class="section-heading"><h2>Son güncellemeler</h2></div><div class="context-grid">'
             + agendaCard("tint-violet", "calendar", "Akademik takvim",
                 next ? (next.title.length > 48 ? next.title.slice(0, 47) + "…" : next.title) + " · " + eventDateLabel(next) + " · " + eventCountdown(next) : "Yaklaşan kayıt yok",
                 team() ? "Kaynak: senato kararı · insan kontrolü bekliyor" : "", 'data-agenda="calendar"')
             + (function () {
                 var nextActivity = upcomingActivities()[0];
-                return agendaCard("tint-green", "calendar", "Etkinlikler",
+                return agendaCard("tint-violet", "calendar", "Etkinlikler",
                   nextActivity ? activityTitle(nextActivity.title) + " · " + activityDateLabel(nextActivity) : "Yaklaşan etkinlik yok", "", 'data-agenda="events"');
               })()
             + agendaCard("tint-blue", "megaphone", "Bölüm duyuruları",
@@ -5132,23 +5473,24 @@
        * işaretlenip eski harf girilmemişse hesap yapılmaz, uyarı gösterilir.
        */
       function repeatRow(course, record) {
-        if (!record.repeat) {
-          return '<div class="repeat-row"><button class="text-button" data-gpa-repeat="' + escapeHtml(course.id)
-            + '">Bu dersi tekrar alıyorum</button></div>';
-        }
         var options = ['<option value="">Önceki harf —</option>'];
         (GRADING ? GRADING.letters : []).forEach(function (item) {
           options.push('<option value="' + item.harf + '"'
             + (record.previousLetter === item.harf ? " selected" : "") + '>' + item.harf + '</option>');
         });
-        return '<div class="repeat-row">'
-          + '<select class="grade-input grade-select" data-gpa="' + escapeHtml(course.id) + ':previousLetter" '
-          + 'aria-label="Bu dersi daha önce aldığın harf notu">' + options.join("") + '</select>'
-          + '<button class="text-button" data-gpa-repeat="' + escapeHtml(course.id) + '">Tekrar değil</button>'
+        var isRetake = Boolean(record.repeat);
+        return '<details class="repeat-details"' + (isRetake ? ' open' : '') + ' style="margin-top:6px;font-size:13px">'
+          + '<summary style="cursor:pointer;color:var(--muted);user-select:none">' + (isRetake ? 'Tekrar dersi ayarı' : 'Dersi tekrar mı alıyorsun?') + '</summary>'
+          + '<div class="repeat-row" style="margin-top:6px">'
+          + (isRetake
+              ? '<select class="grade-input grade-select" data-gpa="' + escapeHtml(course.id) + ':previousLetter" aria-label="Bu dersi daha önce aldığın harf notu">' + options.join("") + '</select>'
+                + '<button class="text-button" data-gpa-repeat="' + escapeHtml(course.id) + '">Tekrarı kaldır</button>'
+              : '<button class="text-button" data-gpa-repeat="' + escapeHtml(course.id) + '">Bu dersi tekrar alıyorum</button>')
           + '</div>'
-          + (record.previousLetter ? "" :
-             '<p class="grade-warning">' + icon("alert")
-             + '<span>Önceki harf girilmeden tekrar dersi genel ortalamaya katılamaz.</span></p>');
+          + (isRetake && !record.previousLetter
+             ? '<p class="grade-warning">' + icon("alert") + '<span>Önceki harf girilmeden tekrar dersi genel ortalamaya katılamaz.</span></p>'
+             : '')
+          + '</details>';
       }
 
       // Tekrar derslerinin ÖNCEKİ denemelerinin toplam puana katkısı.
@@ -6071,13 +6413,22 @@
         } else if (type === "backup") {
           title = "Programı yedekle";
           var payload = JSON.stringify(backupPayload(), null, 2);
-          body = '<p class="sheet-copy">Tercihlerin yalnız bu tarayıcıda tutulur. Telefonu değiştirir ya da site verisini silersen kaybolur; aşağıdaki metin tam yedeğindir.</p>'
+          body = '<p class="sheet-copy">Tercihlerin yalnız bu tarayıcıda saklanır. Cihaz değiştirir ya da tarayıcı verisini temizlersen silinir; yedeğini dosya olarak indirebilirsin.</p>'
+            + '<div class="button-row" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">'
+            + '<button class="primary-button" style="width:100%" data-action="backup-download">' + icon("cloud") + ' Yedeği İndir (.json)</button>'
+            + '<button class="secondary-button" style="width:100%" data-action="backup-upload-click">' + icon("cloud") + ' Yedek Dosyası Yükle</button>'
+            + '<input type="file" id="backup-file-input" accept=".json,application/json" style="display:none">'
+            + '</div>'
+            + '<details class="backup-details" style="margin-top:12px;font-size:13px">'
+            + '<summary style="cursor:pointer;color:var(--muted);user-select:none">Gelişmiş / Metin olarak görüntüle ve yapıştır</summary>'
+            + '<div style="margin-top:8px">'
             + '<textarea id="backup-out" class="code-area" readonly data-filename="unikapsul-yedek.json" aria-label="Yedek metni">' + escapeHtml(payload) + '</textarea>'
             + copyArea("backup-out", "Kopyala")
             + '<p class="sheet-copy" style="margin-top:16px"><strong>Yedeği geri yükle</strong></p>'
             + '<textarea id="backup-in" class="code-area" placeholder="Yedek JSON metnini buraya yapıştır" aria-label="Geri yüklenecek yedek"></textarea>'
             + '<button class="secondary-button" style="width:100%;margin-top:10px" data-action="backup-restore">' + icon("cloud") + ' Yedeği geri yükle</button>'
-            + '<p class="sheet-copy">Geri yükleme seçili derslerini, notlarını ve devamsızlık sayaçlarını bu yedekle değiştirir.</p>';
+            + '</div></details>'
+            + '<p class="sheet-copy" style="margin-top:12px">Geri yükleme seçili derslerini, notlarını ve devamsızlık sayaçlarını bu yedekle değiştirir.</p>';
         } else if (type === "export") {
           title = "Takvime aktar";
           var ics = icsText();
@@ -6135,6 +6486,11 @@
         sheetTitle.textContent = title;
         sheetBody.innerHTML = body;
         sheetBackdrop.classList.remove("hidden");
+        try {
+          if (window.history && window.history.pushState) {
+            window.history.pushState({ unikapsulSheet: true, sheetType: type }, "");
+          }
+        } catch (e) {}
         var closeButton = sheetBackdrop.querySelector('[data-action="close-sheet"]');
         closeButton.innerHTML = icon("x");
         setTimeout(function () { closeButton.focus(); }, 30);
@@ -6144,8 +6500,17 @@
         return '<div class="toggle-row"><span>' + label + '</span><button class="toggle ' + (on ? "on" : "") + '" data-toggle="' + key + '" role="switch" aria-checked="' + on + '" aria-label="' + label + '"></button></div>';
       }
 
-      function closeSheet() {
-        sheetBackdrop.classList.add("hidden");
+      function closeSheet(fromPopState) {
+        if (!sheetBackdrop.classList.contains("hidden")) {
+          sheetBackdrop.classList.add("hidden");
+          if (!fromPopState) {
+            try {
+              if (window.history && window.history.state && window.history.state.unikapsulSheet) {
+                window.history.back();
+              }
+            } catch (e) {}
+          }
+        }
       }
 
       function toast(message) {
@@ -6556,6 +6921,50 @@
           render();
           toast("Prototip sıfırlandı.");
         }
+        if (action === "pick-searched-dept") {
+          var btn = target.closest('[data-action="pick-searched-dept"]');
+          var deptId = btn.getAttribute("data-dept-id");
+          var facId = btn.getAttribute("data-faculty-id");
+          if (deptId && facId) {
+            state.faculty = facId;
+            state.department = deptId;
+            state.grade = defaultGrade(departments[deptId]);
+            state.setup = state.setup || {};
+            state.setup.faculty = true;
+            state.setup.department = true;
+            state.setup.grade = true;
+            persist();
+            renderOnboardingOne();
+          }
+          return;
+        }
+        if (action === "dismiss-offline-banner") {
+          try { sessionStorage.setItem("dismissed_offline_banner", "true"); } catch (e) {}
+          state.dismissedOfflineBanner = true;
+          render();
+          return;
+        }
+        if (action === "backup-download") {
+          var blob = new Blob([JSON.stringify(backupPayload(), null, 2)], { type: "application/json" });
+          var dlUrl = URL.createObjectURL(blob);
+          var dlA = document.createElement("a");
+          dlA.href = dlUrl;
+          dlA.download = "unikapsul-yedek-" + turkeyDateIso() + ".json";
+          document.body.appendChild(dlA);
+          dlA.click();
+          document.body.removeChild(dlA);
+          setTimeout(function () { URL.revokeObjectURL(dlUrl); }, 1000);
+          toast("Yedek dosyası indirildi.");
+          return;
+        }
+        if (action === "backup-upload-click") {
+          var bfi = document.getElementById("backup-file-input");
+          if (bfi) {
+            bfi.value = "";
+            bfi.click();
+          }
+          return;
+        }
         if (action === "backup-restore") {
           var pasted = ((document.getElementById("backup-in") || {}).value || "").trim();
           if (!pasted) { toast("Önce yedek metnini yapıştır."); return; }
@@ -6766,6 +7175,123 @@
         var out = document.getElementById("report-out");
         if (out) out.value = reportText();
       }, true);
+
+      document.addEventListener("change", function (event) {
+        if (event.target && event.target.id === "backup-file-input") {
+          var file = event.target.files && event.target.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            var fileText = String(e.target.result || "");
+            var problem = restoreBackup(fileText);
+            if (problem) {
+              toast(problem);
+              return;
+            }
+            closeSheet();
+            render();
+            toast("Yedek başarıyla yüklendi.");
+          };
+          reader.onerror = function () {
+            toast("Dosya okunamadı.");
+          };
+          reader.readAsText(file);
+        }
+      });
+
+      // Hızlı bölüm arama kutusu
+      document.addEventListener("input", function (event) {
+        if (event.target && event.target.id === "dept-quick-search") {
+          var query = event.target.value.trim().toLocaleLowerCase("tr-TR");
+          var container = document.getElementById("dept-search-results");
+          if (!container) return;
+          if (query.length < 2) {
+            container.innerHTML = "";
+            container.classList.add("hidden");
+            return;
+          }
+          var matches = Object.keys(departments).map(function (k) { return departments[k]; }).filter(function (dept) {
+            var dName = (dept.name || "").toLocaleLowerCase("tr-TR");
+            var f = faculties.find(function (item) { return item.id === dept.facultyId; });
+            var fName = (f ? f.name : "").toLocaleLowerCase("tr-TR");
+            return dName.indexOf(query) !== -1 || fName.indexOf(query) !== -1;
+          }).slice(0, 15);
+
+          if (!matches.length) {
+            container.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--muted)">Eşleşen bölüm bulunamadı.</div>';
+            container.classList.remove("hidden");
+            return;
+          }
+
+          container.innerHTML = matches.map(function (dept) {
+            var f = faculties.find(function (item) { return item.id === dept.facultyId; });
+            return '<button type="button" class="search-result-item" data-action="pick-searched-dept" data-dept-id="' + escapeHtml(dept.id) + '" data-faculty-id="' + escapeHtml(dept.facultyId) + '">'
+              + '<strong style="font-size:14px;color:var(--ink)">' + escapeHtml(dept.name) + '</strong>'
+              + '<span style="font-size:11px;color:var(--muted)">' + escapeHtml(f ? f.name : "") + '</span></button>';
+          }).join("");
+          container.classList.remove("hidden");
+        }
+      });
+
+      // Arama sonuçları dışında tıklayınca kutuyu gizle
+      document.addEventListener("click", function (event) {
+        if (!event.target.closest("#dept-quick-search") && !event.target.closest("#dept-search-results")) {
+          var resBox = document.getElementById("dept-search-results");
+          if (resBox) resBox.classList.add("hidden");
+        }
+      });
+
+      // Dokunmatik sağa/sola kaydırma (Swipe) ile günler arası geçiş (Program ekranı)
+      var touchStartX = 0;
+      var touchStartY = 0;
+      var touchStartTime = 0;
+
+      document.addEventListener("touchstart", function (e) {
+        if (state.route !== "program") return;
+        if (!e.touches || e.touches.length !== 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+      }, { passive: true });
+
+      document.addEventListener("touchend", function (e) {
+        if (state.route !== "program") return;
+        if (!sheetBackdrop.classList.contains("hidden")) return;
+        if (!e.changedTouches || e.changedTouches.length !== 1) return;
+        var deltaX = e.changedTouches[0].clientX - touchStartX;
+        var deltaY = e.changedTouches[0].clientY - touchStartY;
+        var elapsed = Date.now() - touchStartTime;
+
+        if (elapsed < 500 && Math.abs(deltaX) > 48 && Math.abs(deltaY) < 55) {
+          var days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
+          var idx = days.indexOf(state.day);
+          if (idx !== -1) {
+            if (deltaX < 0 && idx < days.length - 1) {
+              // Sağa çekildi (parmak sola kaydı) -> Sonraki gün
+              state.day = days[idx + 1];
+              persist();
+              renderProgram();
+            } else if (deltaX > 0 && idx > 0) {
+              // Sola çekildi (parmak sağa kaydı) -> Önceki gün
+              state.day = days[idx - 1];
+              persist();
+              renderProgram();
+            }
+          }
+        }
+      }, { passive: true });
+
+      // Tarayıcı / mobil cihaz "Geri" hareketi (Back Gesture) yönetimi
+      window.addEventListener("popstate", function () {
+        if (!sheetBackdrop.classList.contains("hidden")) {
+          closeSheet(true);
+          return;
+        }
+        if (state.route === "course-detail") {
+          route(state.previousRoute || "program");
+          return;
+        }
+      });
 
       window.addEventListener("online", function () { render(); });
       window.addEventListener("offline", function () { render(); });
