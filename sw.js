@@ -11,8 +11,8 @@
  */
 "use strict";
 
-// v2 (2026-10-24): yeni tasarım katmanı ve yerel Inter yazı tipi; eski önbellek etkinleşmede silinir.
-var CACHE = "unikapsul-v4";
+// v5 (2026-10-27): arayüz güncellemeleri, saat düzeltmeleri ve vitrin tasarımı; eski önbellek silinir.
+var CACHE = "unikapsul-v5";
 var ASSETS = [
   "./",
   "index.html",
