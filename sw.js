@@ -11,8 +11,8 @@
  */
 "use strict";
 
-// v5 (2026-10-27): arayüz güncellemeleri, saat düzeltmeleri ve vitrin tasarımı; eski önbellek silinir.
-var CACHE = "unikapsul-v5";
+// v6 (2026-10-27): Gündem sekmesinden yemekhane çipi ve menüsü tamamen kaldırıldı; eski önbellek silinir.
+var CACHE = "unikapsul-v6";
 var ASSETS = [
   "./",
   "index.html",

@@ -4971,7 +4971,7 @@
        * "yakında" ekranıydı, kaldırıldı.
        */
       function agendaTab() {
-        return ["all", "announcements", "events", "dining", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
+        return ["all", "announcements", "events", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
       }
 
       function agendaCard(tint, iconName, title, copy, source, attr) {
@@ -4984,7 +4984,7 @@
       function renderAgenda() {
         var tab = agendaTab();
         var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
-        var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["events", "Etkinlikler"], ["dining", "Yemekhane"], ["calendar", "Takvim"]];
+        var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["events", "Etkinlikler"], ["calendar", "Takvim"]];
         var html = ''
           + brandHeader()
           + '<h1 class="page-title">Kampüs gündemi</h1>'
@@ -5095,9 +5095,6 @@
                 "", 'data-agenda="announcements"')
             + '</div></section>'
             + (team() ? '<div class="local-note">' + icon("info") + '<span>Bilgiler resmî kaynaklardan otomatik okunur ve insan kontrolü bekler; kesin bilgi için kaynağı aç.</span></div>' : '');
-        }
-        if (tab === "dining") {
-          return '<div class="panel" style="padding:16px">' + diningMenuSheetHtml() + '</div>';
         }
         if (tab === "events") {
           var acts = upcomingActivities();
