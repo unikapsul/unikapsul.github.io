@@ -2181,6 +2181,7 @@
   <script src="data/exams.js"></script>
   <script src="data/activities.js"></script>
   <script src="data/med-schedule.js"></script>
+  <script src="data/announcements.js"></script>
   <script>
     (function () {
       "use strict";
@@ -4692,7 +4693,7 @@
             + '<div class="panel"><div class="timeline' + (plan.isToday ? ' has-next' : '') + '">' + list.map(function (x) { return medRow(x, plan.isToday && s && x.id === s.id); }).join("") + '</div></div></section>';
         }
         if (src) html += '<p class="stepper-label" style="margin:8px 0 0">Dönem ' + src.donem + ' · ' + escapeHtml(src.kurul_name || src.kurul_code) + ' (' + escapeHtml(diningDateLabel(src.first_date)) + ' – ' + escapeHtml(diningDateLabel(src.last_date)) + ')</p>';
-        html += todayDiningCard() + gradeTodayCard();
+        html += todayAnnouncementCard() + todayDiningCard() + gradeTodayCard();
         screen.innerHTML = layout(html, "today", false);
       }
 
@@ -4804,6 +4805,7 @@
           + (conflict ? '<button class="alert-card" data-route="program"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + escapeHtml(conflict.a.name) + ' ve ' + escapeHtml(conflict.b.name) + ' · ' + escapeHtml(conflict.start) + '–' + escapeHtml(conflict.end) + '</span></span>' + icon("chevron") + '</button>' : "")
           + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><div class="hero-glance"><span class="glance-badge glance-time">' + icon("calendar") + ' ' + escapeHtml(next.start) + '–' + escapeHtml(next.end) + '</span>' + (next.location ? '<span class="glance-badge glance-room">' + escapeHtml(cleanDebugCopy(next.location)) + '</span>' : '') + '</div><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
           + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
+          + todayAnnouncementCard()
           + todayDiningCard()
           + weeklyAbsenceCheck()
           + (function () {
@@ -4965,11 +4967,56 @@
       }
 
       /*
-       * Kampüs gündemi (tasarım 2026-10-24): Tümü / Duyurular / Yemekhane / Takvim. Her kart
-       * kaynağını ve durumunu söyler; duyuru izleyicisinin verisi uygulamaya yüklenmediği için
-       * "Duyurular" yalnız programını besleyen resmî belgeleri gösterir. Fırsatlar sekmesi boş bir
-       * "yakında" ekranıydı, kaldırıldı.
+       * Kampüs gündemi (tasarım 2026-10-24): Tümü / Duyurular / Etkinlikler / Takvim. Fırsatlar
+       * sekmesi boş bir "yakında" ekranıydı, kaldırıldı.
+       *
+       * Duyurular (2026-10-30): duyuru izleyicisinin bulduğu resmî duyurular
+       * (data/announcements.js, tools/build-announcements.py). Belge ayrıştırılmaz: başlık olduğu
+       * gibi, ilk görüldüğü gün ve resmî bağlantı. Bölüm eşlemesi üreticide; birim portalındaki
+       * duyuru birimin bütün programlarına düşer.
        */
+      var announcementData = window.UNIKAPSUL_ANNOUNCEMENTS || { items: [] };
+      var ANNOUNCEMENT_KIND = { sinav: "Sınav", ders_programi: "Ders programı", takvim: "Takvim", kayit: "Kayıt", diger: "Duyuru" };
+
+      function officialAnnouncements() {
+        var ids = [currentDepartment().id];
+        var second = secondDepartment();
+        if (second) ids.push(second.id);
+        return (announcementData.items || []).filter(function (a) {
+          return (a.department_ids || []).some(function (id) { return ids.indexOf(id) !== -1; });
+        });
+      }
+
+      function safeAnnouncementUrl(value) {
+        try {
+          var url = new URL(value);
+          if (url.protocol === "https:" && url.hostname === "www.ohu.edu.tr" && !url.username && !url.password && !url.port
+              && /^\/PagePortal\/[a-z0-9_-]+\/duyuru\/\d+$/.test(url.pathname) && !url.search && !url.hash) return url.href;
+        } catch (error) {}
+        return "";
+      }
+
+      function officialAnnouncementCard(a) {
+        var href = safeAnnouncementUrl(a.url);
+        var meta = escapeHtml(isoDateLabel(a.first_seen) || "") + ' · ' + escapeHtml(ANNOUNCEMENT_KIND[a.kind] || "Duyuru");
+        var inner = '<span class="icon-tile">' + icon("megaphone") + '</span><span><span class="list-title">' + escapeHtml(a.title) + '</span>'
+          + '<span class="list-meta">' + meta + (href ? ' · Resmî duyuruyu aç ↗' : '') + '</span></span>' + icon("chevron");
+        return href ? '<a class="list-card" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + inner + '</a>'
+          : '<div class="list-card">' + inner + '</div>';
+      }
+
+      // Bugün ekranına en çok bir satır: son 7 günde bölümün sınav ya da ders programı duyurusu.
+      function todayAnnouncementCard() {
+        var since = addDaysIso(turkeyDateIso(), -7);
+        var hit = officialAnnouncements().filter(function (a) {
+          return a.first_seen >= since && (a.kind === "sinav" || a.kind === "ders_programi");
+        })[0];
+        if (!hit || !safeAnnouncementUrl(hit.url)) return "";
+        return '<section class="section"><a class="info-card tint-blue" href="' + escapeHtml(safeAnnouncementUrl(hit.url)) + '" target="_blank" rel="noopener noreferrer">'
+          + '<span class="icon-tile">' + icon("megaphone") + '</span><span><span class="card-title">Yeni ' + (hit.kind === "sinav" ? "sınav" : "ders programı") + ' duyurusu</span>'
+          + '<span class="card-copy">' + escapeHtml(hit.title) + '</span><span class="card-copy" style="font-size:12px">' + escapeHtml(isoDateLabel(hit.first_seen) || "") + '</span></span>'
+          + icon("chevron") + '</a></section>';
+      }
       function agendaTab() {
         return ["all", "announcements", "events", "calendar"].indexOf(state.agenda) === -1 ? "all" : state.agenda;
       }
@@ -4983,14 +5030,14 @@
 
       function renderAgenda() {
         var tab = agendaTab();
-        var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
+        var own = officialAnnouncements().length;
         var tabs = [["all", "Tümü"], ["announcements", "Duyurular"], ["events", "Etkinlikler"], ["calendar", "Takvim"]];
         var html = ''
           + brandHeader()
           + '<h1 class="page-title">Kampüs gündemi</h1>'
           + '<p class="page-lead">İhtiyacın olan bilgiler bir arada</p>'
           + '<button class="feature-card" data-agenda="announcements"><span class="feature-icon">' + icon("megaphone") + '</span><span><span class="feature-title">Duyurular</span><span class="feature-copy">'
-          + (own ? 'Bölümünün yayımladığı ' + (own > 1 ? own + ' duyuru' : 'duyuru') : 'Bölümün için henüz duyuru yok') + '</span></span>' + icon("chevron") + '</button>'
+          + (own ? 'Bölümün için ' + own + ' resmî duyuru' : 'Bölümünün son ' + (announcementData.window_days || 60) + ' günde yeni duyurusu yok') + '</span></span>' + icon("chevron") + '</button>'
           + '<div class="filter-row" role="group" aria-label="Gündem filtresi" style="margin-top:16px">' + tabs.map(function (t) {
               return '<button class="segment ' + (tab === t[0] ? "active" : "") + '" data-agenda="' + t[0] + '"' + (tab === t[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + '>' + t[1] + '</button>';
             }).join("") + '</div>'
@@ -5081,6 +5128,7 @@
         if (tab === "all") {
           var next = upcomingEvents(1)[0];
           var own = announcementEntries().filter(function (entry) { return entry.own; }).length;
+          var latest = officialAnnouncements()[0];
           return '<section class="section" style="margin-top:8px"><div class="section-heading"><h2>Son güncellemeler</h2></div><div class="context-grid">'
             + agendaCard("tint-violet", "calendar", "Akademik takvim",
                 next ? (next.title.length > 48 ? next.title.slice(0, 47) + "…" : next.title) + " · " + eventDateLabel(next) + " · " + eventCountdown(next) : "Yaklaşan kayıt yok",
@@ -5091,8 +5139,8 @@
                   nextActivity ? activityTitle(nextActivity.title) + " · " + activityDateLabel(nextActivity) : "Yaklaşan etkinlik yok", "", 'data-agenda="events"');
               })()
             + agendaCard("tint-blue", "megaphone", "Bölüm duyuruları",
-                team() ? (own ? own + " resmî belge programını besliyor" : "Programın için okunmuş resmî belge yok") : (own ? "Bölümünün ders programı duyurusu" : "Henüz duyuru yok"),
-                "", 'data-agenda="announcements"')
+                latest ? (latest.title.length > 60 ? latest.title.slice(0, 59) + "…" : latest.title) + " · " + (isoDateLabel(latest.first_seen) || "") : "Yeni duyuru yok",
+                team() ? own + " resmî belge programını besliyor" : "", 'data-agenda="announcements"')
             + '</div></section>'
             + (team() ? '<div class="local-note">' + icon("info") + '<span>Bilgiler resmî kaynaklardan otomatik okunur ve insan kontrolü bekler; kesin bilgi için kaynağı aç.</span></div>' : '');
         }
@@ -5128,18 +5176,17 @@
             + '</div>'
             + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="calendar">Akademik takvim belgesi</button></div>';
         }
+        var official = officialAnnouncements();
         var entries = announcementEntries().filter(function (entry) { return team() || entry.own; });
-        if (!entries.length && !team()) {
-          return '<div class="empty-state"><span class="icon-tile">' + icon("megaphone") + '</span><h3>Programın için resmî duyuru yok</h3><p>' + escapeHtml(currentDepartment().name) + ' için ders programı belgesi henüz okunmadı. Akademik tarihler Takvim sekmesinde.</p><button class="secondary-button" data-agenda="calendar">Takvimi aç</button></div>';
+        var html = '<p class="sheet-copy">Bölümünün ve fakültesinin resmî duyuruları. Ayrıntı ve belgeler duyurunun kendi sayfasında.</p>'
+          + (official.length
+            ? '<div class="list-stack" style="margin-top:10px">' + official.map(officialAnnouncementCard).join("") + '</div>'
+            : '<div class="empty-state"><span class="icon-tile">' + icon("megaphone") + '</span><h3>Yeni duyuru yok</h3><p>Bölümünün son ' + (announcementData.window_days || 60) + ' günde yeni duyurusu yok. Akademik tarihler Takvim sekmesinde.</p><button class="secondary-button" data-agenda="calendar">Takvimi aç</button></div>');
+        if (entries.length) {
+          html += '<section class="section"><div class="section-heading"><h2>' + (team() ? 'Ders satırını besleyen belgeler' : 'Ders programının kaynağı') + '</h2></div>'
+            + '<div class="list-stack">' + entries.map(announcementCard).join("") + '</div></section>';
         }
-        if (!entries.length) {
-          return '<div class="empty-state"><span class="icon-tile">' + icon("database") + '</span><h3>Kaynak belgesi yok</h3><p>Ders satırı besleyen resmî duyuru henüz arşivlenmedi.</p></div>';
-        }
-        return '<p class="sheet-copy">' + (team()
-            ? 'Ekip görünümü: ders satırını besleyen <strong>tüm resmî duyuru belgeleri</strong>.'
-            : 'Senin programını ilgilendiren <strong>resmî duyurular</strong>. Yalnız üniversitenin kendi yayınından alınır.') + '</p>'
-          + '<div class="list-stack" style="margin-top:10px">' + entries.map(announcementCard).join("") + '</div>'
-          + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="agenda-sources">Kaynak politikası</button>' + (team() ? '<button class="secondary-button" data-sheet="coverage">Veri kapsamı</button>' : '') + '</div>';
+        return html + '<div class="button-row" style="margin-top:12px"><button class="secondary-button" data-sheet="agenda-sources">Kaynak politikası</button>' + (team() ? '<button class="secondary-button" data-sheet="coverage">Veri kapsamı</button>' : '') + '</div>';
       }
 
       /*

@@ -12,7 +12,7 @@
 "use strict";
 
 // v7 (2026-10-28): Hızlı bölüm arama seçimi düzeltildi (defaultGrade hatası giderildi).
-var CACHE = "unikapsul-v7";
+var CACHE = "unikapsul-v8";
 var ASSETS = [
   "./",
   "index.html",
@@ -31,7 +31,8 @@ var ASSETS = [
   "data/curriculum.js",
   "data/exams.js",
   "data/activities.js",
-  "data/med-schedule.js"
+  "data/med-schedule.js",
+  "data/announcements.js"
 ];
 
 self.addEventListener("install", function (event) {
