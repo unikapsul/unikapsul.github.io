@@ -13,7 +13,7 @@
 
 // v7 (2026-10-28): Hızlı bölüm arama seçimi düzeltildi (defaultGrade hatası giderildi).
 // v9 (2026-11-05): Stitch tasarımı (Bugün ekranı) ve yerel Plus Jakarta Sans.
-var CACHE = "unikapsul-v9";
+var CACHE = "unikapsul-v10";
 var ASSETS = [
   "./",
   "index.html",

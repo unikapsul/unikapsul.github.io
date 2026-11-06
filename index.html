@@ -1212,6 +1212,7 @@
     /* Ara sınav ajandası (2026-10-23) */
     .exam-next { width: 100%; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; align-items: center; margin-bottom: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--teal-2); text-align: left; cursor: pointer; }
     .exam-next-count { display: grid; place-items: center; color: var(--teal); font-size: 34px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; text-align: center; }
+    .exam-next-count.word { font-size: 22px; }
     .exam-next-count small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 650; }
     .exam-next-label { display: block; color: var(--teal); font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
     .exam-next-title { display: block; margin-top: 4px; font-size: 16px; font-weight: 780; line-height: 1.3; overflow-wrap: anywhere; }
@@ -1220,20 +1221,44 @@
     .exam-source a { color: var(--teal); font-weight: 650; }
     .exam-banner { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; margin: 0 0 4px; padding: 12px 14px; border-radius: 14px; background: var(--amber-2); color: var(--ink); font-size: 13px; line-height: 1.45; }
     .exam-banner svg { width: 20px; height: 20px; color: var(--amber); }
-    .exam-day { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
-    .exam-day + .exam-day { margin-top: 12px; }
-    .exam-day.past { opacity: .55; }
-    .exam-day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 11px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
-    .exam-day-head strong { font-size: 14px; font-weight: 780; text-transform: capitalize; }
-    .exam-day-head span { color: var(--muted); font-size: 13px; }
-    .exam-day-head .exam-day-left { margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
-    .exam-line { width: 100%; display: grid; grid-template-columns: 50px minmax(0, 1fr) 18px; gap: 10px; align-items: center; min-height: 56px; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; cursor: pointer; }
-    .exam-day-head + .exam-line { border-top: 0; }
-    .exam-line > svg { width: 18px; height: 18px; color: var(--muted); }
-    .exam-line.note { grid-template-columns: 50px minmax(0, 1fr); cursor: default; }
-    .exam-time { align-self: start; padding-top: 1px; font-size: 16px; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .exam-hero { margin: 2px 0 14px; }
+    .exam-eyebrow { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .exam-eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+    .exam-hero h2 { margin: 4px 0 0; font-size: 22px; font-weight: 800; line-height: 1.2; text-wrap: balance; }
+    .exam-tabs { margin-bottom: 12px; }
+    .exam-tabs .segment { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .exam-tabs .segment[disabled] { opacity: .55; cursor: default; }
+    .exam-count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font-size: 11px; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .exam-tabs .segment.active .exam-count { background: var(--teal-2); color: var(--teal); }
+    .exam-source-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 16px; padding: 14px; border: 1px solid var(--line); border-left: 4px solid var(--teal); border-radius: var(--radius); background: var(--surface); }
+    .exam-source-text { min-width: 0; }
+    .exam-source-text strong { display: block; font-size: 15px; font-weight: 780; }
+    .exam-source-text span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .exam-source-link { grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; text-decoration: none; font-weight: 700; }
+    .exam-source-link svg { width: 18px; height: 18px; }
+    .exam-day + .exam-day { margin-top: 18px; }
+    .exam-day.past { opacity: .6; }
+    .exam-day-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .exam-day-head svg { width: 18px; height: 18px; color: var(--teal); flex: none; }
+    .exam-day-head strong { font-size: 16px; font-weight: 800; text-transform: capitalize; }
+    .exam-day-when { padding: 1px 8px; border-radius: 999px; background: var(--amber-2); color: var(--amber); font-size: 11px; font-weight: 750; }
+    .exam-day-head .exam-day-left { margin-left: auto; padding: 2px 9px; border-radius: 999px; background: var(--teal-2); color: var(--teal); font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .exam-day-list { display: grid; gap: 8px; }
+    .exam-line { width: 100%; display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 64px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); text-align: left; cursor: pointer; }
+    .exam-date { display: grid; place-items: center; align-self: start; min-height: 50px; padding: 4px 0; border-radius: 12px; background: var(--surface-2); line-height: 1.05; }
+    .exam-date small { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .05em; }
+    .exam-date b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .exam-end { display: grid; justify-items: center; gap: 6px; }
+    .exam-end svg { width: 18px; height: 18px; color: var(--teal); }
+    .exam-pill { padding: 3px 9px; border-radius: 999px; background: var(--teal-2); color: var(--teal); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .exam-line.done .exam-pill { background: var(--surface-3); color: var(--muted); }
+    .exam-line.note { grid-template-columns: 50px minmax(0, 1fr); cursor: default; background: var(--surface-2); }
+    .exam-line.note .exam-time { justify-self: center; }
+    .exam-time { font-size: 15px; font-weight: 780; font-variant-numeric: tabular-nums; }
     .exam-body { min-width: 0; }
-    .exam-name { display: block; font-size: 14px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+    .exam-grade { display: inline-block; margin-bottom: 4px; padding: 1px 7px; border-radius: 6px; background: var(--teal); color: var(--surface); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .exam-name { display: block; font-size: 15px; font-weight: 750; line-height: 1.3; overflow-wrap: anywhere; }
+    .exam-sub { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
     .exam-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .exam-chip { padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font-size: 11px; font-weight: 650; line-height: 1.6; overflow-wrap: anywhere; }
     .exam-chip.warn { background: var(--amber-2); color: var(--amber); }
@@ -1242,8 +1267,10 @@
     @media (max-width: 360px) {
       .exam-next { grid-template-columns: 60px minmax(0, 1fr); gap: 10px; padding: 14px; }
       .exam-next-count { font-size: 28px; }
-      .exam-line { grid-template-columns: 44px minmax(0, 1fr) 16px; gap: 8px; padding: 10px 12px; }
-      .exam-time { font-size: 15px; }
+      .exam-next-count.word { font-size: 18px; }
+      .exam-line { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 9px; padding: 10px; }
+      .exam-date b { font-size: 18px; }
+      .exam-hero h2 { font-size: 20px; }
     }
     .gpa-details {
       border: 1px solid var(--line);
@@ -4504,15 +4531,22 @@
       function examLine(exam, opts) {
         opts = opts || {};
         var meta = [];
-        if (exam.room_raw) meta.push('<span class="exam-chip">Salon ' + escapeHtml(exam.room_raw) + '</span>');
-        if (opts.grade && exam.grade_raw) meta.push('<span class="exam-chip">' + escapeHtml(examGradeLabel(exam.grade_raw)) + '</span>');
         if (opts.clash) meta.push('<span class="exam-chip warn">' + (team() ? 'Belgede bu saatte ' + opts.clash + ' sınav var' : 'Aynı saatte ' + opts.clash + ' sınav') + '</span>');
         if (exam.verification_status === "needs_review") meta.push(team() ? '<span class="exam-chip warn">Kontrol bekliyor</span>' : '<span class="exam-chip warn">Teyit et</span>');
-        return '<button class="exam-line" data-exam="' + escapeHtml(exam.exam_id) + '">'
-          + '<span class="exam-time">' + escapeHtml(exam.start_time || "—") + '</span>'
-          + '<span class="exam-body"><span class="exam-name">' + escapeHtml(exam.course_name) + '</span>'
+        var sub = [];
+        if (exam.room_raw) sub.push('Salon ' + escapeHtml(exam.room_raw));
+        if (exam.course_code) sub.push(escapeHtml(exam.course_code));
+        var parts = exam.date ? examDateParts(exam.date) : null;
+        var past = exam.date && daysUntil(exam.date) < 0;
+        // Stitch "Sınav Takvimi" (2026-11-06): tarih kutusu · ders · saat hapı; geçmiş sınavda onay işareti.
+        return '<button class="exam-line' + (past ? ' done' : '') + '" data-exam="' + escapeHtml(exam.exam_id) + '">'
+          + '<span class="exam-date">' + (parts ? '<small>' + escapeHtml(parts.weekday.slice(0, 3).toLocaleUpperCase("tr-TR")) + '</small><b>' + Number(exam.date.slice(8, 10)) + '</b>' : '<b>—</b>') + '</span>'
+          + '<span class="exam-body">'
+          + (opts.grade && exam.grade_raw ? '<span class="exam-grade">' + escapeHtml(examGradeLabel(exam.grade_raw)) + '</span>' : '')
+          + '<span class="exam-name">' + escapeHtml(exam.course_name) + '</span>'
+          + (sub.length ? '<span class="exam-sub">' + sub.join(' · ') + '</span>' : '')
           + (meta.length ? '<span class="exam-meta">' + meta.join("") + '</span>' : '')
-          + '</span>' + icon("chevron") + '</button>';
+          + '</span><span class="exam-end"><span class="exam-pill">' + escapeHtml(exam.start_time || "—") + '</span>' + (past ? icon("check") : '') + '</span></button>';
       }
 
       // Liste günlere bölünür; belgedeki merkezi/ortak sınav notları kendi
@@ -4547,9 +4581,10 @@
             }))
             .sort(function (a, b) { return a.t.localeCompare(b.t); });
           return '<div class="exam-day' + (left !== null && left < 0 ? ' past' : '') + '">'
-            + '<div class="exam-day-head"><strong>' + escapeHtml(parts.weekday) + '</strong><span>' + escapeHtml(parts.date) + '</span>'
-            + (left !== null ? '<span class="exam-day-left">' + escapeHtml(left < 0 ? "geçti" : left === 0 ? "bugün" : left === 1 ? "yarın" : left + " gün") + '</span>' : '')
-            + '</div>' + rows.map(function (r) { return r.html; }).join("") + '</div>';
+            + '<div class="exam-day-head">' + icon("calendar") + '<strong>' + escapeHtml(iso ? parts.date + ' ' + parts.weekday : 'Tarihi yazmayan') + '</strong>'
+            + (left !== null && left >= 0 && left <= 1 ? '<span class="exam-day-when">' + (left === 0 ? "bugün" : "yarın") + '</span>' : '')
+            + '<span class="exam-day-left">' + day.exams.length + ' sınav</span>'
+            + '</div><div class="exam-day-list">' + rows.map(function (r) { return r.html; }).join("") + '</div></div>';
         }).join("");
       }
 
@@ -4581,7 +4616,7 @@
         var left = daysUntil(next.date);
         var parts = examDateParts(next.date);
         return '<button class="exam-next" data-exam="' + escapeHtml(next.exam_id) + '">'
-          + '<span class="exam-next-count">' + (left === 0 ? 'Bugün' : left === 1 ? 'Yarın' : left + '<small>gün kaldı</small>') + '</span>'
+          + '<span class="exam-next-count' + (left <= 1 ? ' word' : '') + '">' + (left === 0 ? 'Bugün' : left === 1 ? 'Yarın' : left + '<small>gün kaldı</small>') + '</span>'
           + '<span class="exam-body"><span class="exam-next-label">Sıradaki sınavın</span>'
           + '<span class="exam-next-title">' + escapeHtml(next.course_name) + '</span>'
           + '<span class="exam-next-meta">' + escapeHtml(parts.date + ' ' + parts.weekday) + (next.start_time ? ' · ' + escapeHtml(next.start_time) : '')
@@ -4628,7 +4663,8 @@
         var mine = myExams();
         var all = departmentExams(department.id);
         var period = examPeriod();
-        var html = '<div class="screen-header"><button class="icon-button" data-route="' + (state.previousRoute === "exams" ? "today" : state.previousRoute) + '" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Ara sınavlarım</h1><span style="width:44px"></span></div>';
+        var html = '<div class="screen-header"><button class="icon-button" data-route="' + (state.previousRoute === "exams" ? "today" : state.previousRoute) + '" aria-label="Geri">' + icon("back") + '</button><h1 class="screen-title">Ara sınavlarım</h1><span style="width:44px"></span></div>'
+          + '<div class="exam-hero"><span class="exam-eyebrow">Güz dönemi ara sınavları</span><h2>2026-2027 Ara Sınav Takvimi</h2></div>';
         var source = all.length ? examData.sources[all[0].source_id] : null;
         var scanned = (examData.scanned_departments || []).indexOf(department.id) !== -1;
         if (!all.length) {
@@ -4657,16 +4693,23 @@
           source = examData.sources[sourceIds[0]] || source;
           noticeList = noticeList.filter(function (n) { return shownSources[n.source_id] || (!mine.length && !byGrade); });
           var review = shown.filter(function (e) { return e.verification_status === "needs_review"; }).length;
+          // Yaklaşan / Tamamlanan sekmesi: tarih bugünden önceyse tamamlanmış sayılır.
+          var upcoming = shown.filter(function (e) { return !e.date || daysUntil(e.date) >= 0; });
+          var done = shown.filter(function (e) { return e.date && daysUntil(e.date) < 0; });
+          var tab = state.examTab === "done" && done.length ? "done" : "upcoming";
           html += examNext(mine.length ? mine : byGrade ? shown : [])
-            + '<p class="exam-source">Bölümün ' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihli duyurusu' + (team() ? ' · insan kontrolünden geçmedi, belge güncellenebilir.' : '.')
-            + (source.document_url && sourceIds.length === 1 ? ' <a href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">Belgeyi aç</a>' : '') + '</p>'
+            + '<div class="segmented exam-tabs"><button class="segment ' + (tab === "upcoming" ? "active" : "") + '" data-exam-tab="upcoming">Yaklaşan <span class="exam-count">' + upcoming.length + '</span></button>'
+            + '<button class="segment ' + (tab === "done" ? "active" : "") + '" data-exam-tab="done"' + (done.length ? '' : ' disabled') + '>Tamamlanan <span class="exam-count">' + done.length + '</span></button></div>'
+            + '<div class="exam-source-card"><span class="icon-tile">' + icon("megaphone") + '</span><span class="exam-source-text"><strong>Bölümün ara sınav duyurusu</strong>'
+            + '<span>' + escapeHtml(isoDateLabel(source.published_at) || "") + ' tarihinde yayımlandı' + (team() ? ' · insan kontrolünden geçmedi, belge güncellenebilir' : '') + '. Değişiklik olursa resmî belge geçerlidir.</span></span>'
+            + (source.document_url && sourceIds.length === 1 ? '<a class="secondary-button exam-source-link" href="' + escapeHtml(safeOfficialUrl(source.document_url)) + '" target="_blank" rel="noopener noreferrer">' + icon("download") + ' Belgeyi aç</a>' : '') + '</div>'
             + (review && team() ? '<p class="exam-banner">' + icon("alert") + '<span>' + examReviewSummary(shown) + ' Ayrıntı için sınava dokun.</span></p>' : '')
             + '<section class="section"><div class="section-heading"><h2>' + (mine.length ? 'Sınav takvimim' : byGrade ? state.grade + '. sınıf ara sınavları' : 'Bölümün ara sınavları') + '</h2>'
-            + '<span class="gpa-sub">' + shown.length + ' sınav</span></div>'
+            + '<span class="gpa-sub">' + (tab === "done" ? done.length : upcoming.length) + ' sınav</span></div>'
             + (mine.length ? '' : byGrade
                 ? '<p class="sheet-copy" style="margin-top:0">' + (team() ? 'Seçtiğin derslerle eşleşme yok; liste belgedeki sınıf sütununa göre süzüldü. Diğer sınıflar aşağıda.' : 'Sınıfının ara sınavları. Diğer sınıflar aşağıda.') + '</p>'
                 : '<p class="sheet-copy" style="margin-top:0">' + (team() ? 'Seçtiğin derslerle birebir eşleşen sınav yok; ders adı belgede farklı yazılmış olabilir. Bölümün tüm sınavları aşağıda.' : 'Bölümünün tüm ara sınavları.') + '</p>')
-            + examAgenda(shown, { grade: !mine.length && !byGrade, notes: noticeList })
+            + (tab === "done" ? examAgenda(done, { grade: !mine.length && !byGrade }) : examAgenda(upcoming, { grade: !mine.length && !byGrade, notes: noticeList }))
             + (noticeList.length ? '<p class="exam-source" style="margin-top:10px">' + (team() ? '"Belgedeki not" satırları merkezi ve fakülte ortak sınavlar için ayrılmış saattir; onların programı ayrı yayımlanır.' : 'Not satırları merkezi ve fakülte ortak sınavlara ayrılmış saatlerdir; onların programı ayrıca yayımlanır.') + '</p>' : '')
             + '</section>';
           if (mine.length || byGrade) {
@@ -6897,6 +6940,11 @@
           // Bugün'deki "Akademik takvim" kısayolu Gündem'in takvim sekmesini açar.
           if (target.hasAttribute("data-agenda-tab")) state.agenda = target.getAttribute("data-agenda-tab");
           route(target.getAttribute("data-route"));
+          return;
+        }
+        if (target.hasAttribute("data-exam-tab")) {
+          state.examTab = target.getAttribute("data-exam-tab");
+          renderExams();
           return;
         }
         if (target.hasAttribute("data-course")) {
