@@ -12,7 +12,8 @@
 "use strict";
 
 // v7 (2026-10-28): Hızlı bölüm arama seçimi düzeltildi (defaultGrade hatası giderildi).
-var CACHE = "unikapsul-v8";
+// v9 (2026-11-05): Stitch tasarımı (Bugün ekranı) ve yerel Plus Jakarta Sans.
+var CACHE = "unikapsul-v9";
 var ASSETS = [
   "./",
   "index.html",
@@ -23,6 +24,8 @@ var ASSETS = [
   "icons/apple-180.png",
   "fonts/inter-latin.woff2",
   "fonts/inter-latin-ext.woff2",
+  "fonts/plus-jakarta-sans-latin.woff2",
+  "fonts/plus-jakarta-sans-latin-ext.woff2",
   "data/catalog.js",
   "data/offerings.js",
   "data/grading-rules.js",

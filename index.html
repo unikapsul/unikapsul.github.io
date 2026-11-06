@@ -2026,6 +2026,191 @@
     [data-app-theme="dark"] .status-bar, [data-app-theme="dark"] .bottom-nav, [data-app-theme="dark"] .sticky-action { background: color-mix(in srgb, var(--surface) 96%, transparent); }
     [data-app-theme="dark"] .rail::before { background: var(--line); }
     [data-app-theme="dark"] .info-card { background-image: none; }
+
+    /*
+     * Stitch tasarımı (2026-11-05, depo sahibinin "Campus Capsule Modern" önerisi, DESIGN.md).
+     * Renk sistemi zaten aynıydı (#3168d5, #101d3f, #5c6782, #fafbfe); bu blok bileşenleri ekler:
+     * başlık yazı tipi Plus Jakarta Sans (yerel), "şu an derstesin" kartı, günün akışı, yemek
+     * çipleri, hızlı araçlar, cihaz notu ve yüzen alt menü.
+     */
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      font-style: normal;
+      font-weight: 500 800;
+      font-display: swap;
+      src: url("fonts/plus-jakarta-sans-latin-ext.woff2") format("woff2");
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      font-style: normal;
+      font-weight: 500 800;
+      font-display: swap;
+      src: url("fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    :root {
+      --display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      --now-a: #3168d5;
+      --now-b: #004ebb;
+      --now-c: #101d3f;
+      --mint: #10b981;
+      --mint-ink: #006c49;
+      --mint-bg: rgba(16, 185, 129, .12);
+      --live: #ef4444;
+      --bad-ink: #b42318;
+      --bad-bg: #fdecea;
+      --elev-1: 0 2px 8px rgba(16, 29, 63, .04);
+      --elev-2: 0 8px 24px rgba(16, 29, 63, .08);
+      --hair: rgba(92, 103, 130, .12);
+    }
+    :root[data-app-theme="dark"] {
+      --now-a: #2a5cc4;
+      --now-b: #1d438f;
+      --now-c: #0d1730;
+      --mint: #34d399;
+      --mint-ink: #7ce3b8;
+      --mint-bg: rgba(52, 211, 153, .14);
+      --live: #f05252;
+      --bad-ink: #ffb4ab;
+      --bad-bg: #3a1714;
+      --elev-1: 0 2px 8px rgba(0, 0, 0, .25);
+      --elev-2: 0 8px 24px rgba(0, 0, 0, .35);
+      --hair: rgba(166, 177, 199, .14);
+    }
+    .brand, .page-title, .screen-title, .section-heading h2, .now-title, .feature-title, .tile-title, .quick-title, .empty-state h3 {
+      font-family: var(--display);
+    }
+    .section-heading h2 { letter-spacing: -.015em; }
+    .today-lead { margin: 10px 2px 0; color: var(--muted); font-size: 14px; }
+    .today-lead strong { color: var(--ink); }
+
+    /* Şu an / sıradaki ders kartı */
+    .now-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: 12px;
+      margin-top: var(--space-4);
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--now-a) 0%, var(--now-b) 55%, var(--now-c) 100%);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(16, 29, 63, .12);
+    }
+    .now-card::after { content: ""; position: absolute; right: -40px; bottom: -40px; width: 176px; height: 176px; border-radius: 50%; background: rgba(255, 255, 255, .10); filter: blur(28px); pointer-events: none; }
+    .now-card > * { position: relative; z-index: 1; min-width: 0; }
+    .now-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .now-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .18); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .now-pill.is-live { background: var(--live); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: live-pulse 1.6s ease-in-out infinite; }
+    @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+    :root[data-reduce-motion="1"] .live-dot { animation: none; }
+    @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+    .now-side { padding: 3px 10px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .15); font-size: 12px; font-weight: 600; }
+    .now-kind { color: rgba(255, 255, 255, .82); font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+    .now-title { margin: -6px 0 0; color: #fff; font-size: 22px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em; overflow-wrap: anywhere; }
+    .now-title .confirm-chip { margin-left: 8px; vertical-align: middle; }
+    .now-time { margin-top: -6px; color: rgba(255, 255, 255, .85); font-size: 14px; font-weight: 600; }
+    .now-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .now-fact { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .now-fact > span:last-child { display: grid; min-width: 0; }
+    .now-fact-icon { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 9px; background: rgba(255, 255, 255, .15); }
+    .now-fact-icon .icon { width: 17px; height: 17px; color: #fff; }
+    .now-fact-label { color: rgba(255, 255, 255, .72); font-size: 11px; font-weight: 600; }
+    .now-fact-value { color: #fff; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .now-progress { display: grid; gap: 6px; }
+    .now-progress-labels { display: flex; justify-content: space-between; color: rgba(255, 255, 255, .8); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .now-progress-labels strong { color: #fff; }
+    .now-bar { height: 8px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .2); overflow: hidden; }
+    .now-bar > span { display: block; height: 100%; border-radius: inherit; background: #6ffbbe; }
+    .now-actions { display: flex; gap: 8px; }
+    .now-primary, .now-ghost { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .now-primary { flex: 1; background: #fff; color: #1d4bb0; white-space: nowrap; }
+    .now-ghost { white-space: nowrap; }
+    @media (max-width: 340px) { .now-primary, .now-ghost { padding: 0 12px; } }
+    .now-ghost { background: rgba(255, 255, 255, .15); color: #fff; }
+    .now-primary .icon, .now-ghost .icon { width: 17px; height: 17px; }
+    @media (max-width: 340px) { .now-facts { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Günün akışı */
+    .flow-heading { flex-wrap: wrap; gap: 8px; }
+    .flow-chips { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+    .flow-chip { padding: 3px 9px; border-radius: var(--radius-pill); background: var(--primary-2); color: var(--tint-blue-ink); font-size: 11px; font-weight: 700; }
+    .flow-chip.is-ok { background: var(--mint-bg); color: var(--mint-ink); }
+    .flow-chip.is-bad { background: var(--bad-bg); color: var(--bad-ink); }
+    .flow-list { display: grid; gap: 10px; }
+    .flow-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px 14px 14px 12px;
+      border: 1px solid var(--hair);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--elev-1);
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+    }
+    .flow-row.is-next, .flow-row.is-live { border-left: 4px solid var(--primary); padding-left: 9px; box-shadow: var(--elev-2); }
+    .flow-row.is-live { border-left-color: var(--live); }
+    .flow-row.is-done { opacity: .62; }
+    .flow-time { display: grid; align-content: start; gap: 2px; font-variant-numeric: tabular-nums; }
+    .flow-time strong { color: var(--primary); font-size: 14px; }
+    .flow-time span { color: var(--muted); font-size: 12px; }
+    .flow-main { display: grid; gap: 4px; min-width: 0; }
+    .flow-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .flow-badge { padding: 2px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
+    .flow-badge.is-next { background: var(--primary-2); color: var(--tint-blue-ink); }
+    .flow-badge.is-live { background: var(--live); color: #fff; }
+    .flow-badge.is-done { background: var(--surface-3); color: var(--muted); }
+    .flow-rel { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .flow-rel .icon { width: 14px; height: 14px; }
+    .flow-title { font-size: 16px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+    .flow-meta { color: var(--muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+    .flow-meta strong { color: var(--ink); font-weight: 650; }
+    .flow-gap { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--surface-3); color: var(--muted); font-size: 13px; font-weight: 600; }
+    .flow-gap .icon { width: 18px; height: 18px; color: var(--primary); }
+
+    /* Günün menüsü */
+    .menu-card { width: 100%; display: grid; gap: 10px; padding: 14px; border: 1px solid var(--hair); border-radius: 16px; background: var(--surface); box-shadow: var(--elev-1); color: var(--ink); text-align: left; cursor: pointer; }
+    .menu-kcal { justify-self: end; padding: 2px 8px; border-radius: 8px; background: var(--primary-2); color: var(--tint-blue-ink); font-size: 11px; font-weight: 700; }
+    .menu-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .menu-chip { padding: 7px 11px; border-radius: 10px; background: var(--surface-3); font-size: 13px; font-weight: 600; }
+
+    /* Hızlı araçlar */
+    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .quick-tool { min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 12px; border: 1px solid var(--hair); border-radius: 16px; background: var(--surface); box-shadow: var(--elev-1); color: var(--ink); text-align: left; cursor: pointer; }
+    .quick-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--primary-2); color: var(--primary); }
+    .quick-icon .icon { width: 20px; height: 20px; }
+    .quick-text { display: grid; min-width: 0; }
+    .quick-title { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+    .quick-copy { color: var(--muted); font-size: 11.5px; line-height: 1.35; overflow-wrap: anywhere; }
+    @media (max-width: 340px) { .quick-grid { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Cihaz notu */
+    .device-note { display: flex; align-items: flex-start; gap: 12px; margin-top: var(--space-5); padding: 14px 16px; border-radius: 16px; background: var(--surface-3); color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .device-note .icon { width: 22px; height: 22px; flex: none; color: var(--primary); margin-top: 1px; }
+    .device-note strong { color: var(--ink); }
+
+    /* Yüzen alt menü */
+    .bottom-nav {
+      left: 12px;
+      right: 12px;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      min-height: 64px;
+      padding: 6px 4px;
+      border: 1px solid var(--hair);
+      border-radius: 22px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: var(--elev-2);
+    }
+    [data-app-theme="dark"] .bottom-nav { background: color-mix(in srgb, var(--surface) 92%, transparent); }
+    .nav-button { position: relative; }
+    .nav-button.active::before { content: ""; position: absolute; top: 1px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--primary); }
+    .nav-button.active .nav-icon-wrap { background: transparent; }
   </style>
 </head>
 <body>
@@ -4778,6 +4963,127 @@
           + '<span>' + escapeHtml(department.name) + ' · ' + escapeHtml(selectedGradeLabel()) + '</span>' + icon("chevron") + '</button>';
       }
 
+
+      /*
+       * Stitch tasarımı (2026-11-05, depo sahibinin "Campus Capsule Modern" önerisi). Yalnız elimizdeki
+       * veriden çizilir: öğrenci adı, karekodla aktarma, "çakışma çözüldü", yol tarifi, kütüphane
+       * doluluğu, yemek fiyatı ve saati gibi verisi olmayan öğeler bilerek alınmadı.
+       */
+      function spanCopy(min) {
+        min = Math.max(0, Math.round(min));
+        var h = Math.floor(min / 60), m = min % 60;
+        return h ? (h + " sa" + (m ? " " + m + " dk" : "")) : (m + " dk");
+      }
+
+      // Öğretim elemanı yalnız adla yazılmışsa gösterilir; belgede numarayla yazılmışsa ad gibi sunulmaz.
+      function personName(course) {
+        var v = instructorCopy(course.instructor);
+        if (v === "Belgede yazmıyor" || v === "Öğretim elemanı gösterilmiyor") return "";
+        return /[A-Za-zÇĞİÖŞÜçğıöşü]{2}/.test(v) ? v : "";
+      }
+
+      function courseKindCopy(course) {
+        return [course.code || "", course.elective === true ? "Seçmeli" : course.elective === false ? "Zorunlu" : ""]
+          .filter(Boolean).map(escapeHtml).join(" • ");
+      }
+
+      function nowCard(plan) {
+        var c = plan.course;
+        var nowMin = nowInMinutes();
+        var s = timeToMinutes(c.start), e = timeToMinutes(c.end);
+        var running = plan.isToday && s !== null && e !== null && s <= nowMin && nowMin < e;
+        var pill, side;
+        if (running) {
+          pill = '<span class="now-pill is-live"><span class="live-dot"></span>Şu an derstesin</span>';
+          side = 'Bitişe ' + spanCopy(e - nowMin) + ' kaldı';
+        } else if (plan.isToday) {
+          pill = '<span class="now-pill">Sıradaki ders</span>';
+          side = spanCopy(s - nowMin) + ' sonra';
+        } else {
+          pill = '<span class="now-pill">' + (plan.list.length ? 'Bugünkü derslerin bitti' : 'Bugün dersin yok') + '</span>';
+          side = escapeHtml(plan.when || "") + ' · ' + escapeHtml(c.start);
+        }
+        var room = cleanDebugCopy(c.location);
+        var person = personName(c);
+        var facts = (room ? '<div class="now-fact"><span class="now-fact-icon">' + icon("map") + '</span><span><span class="now-fact-label">Derslik</span><span class="now-fact-value">' + escapeHtml(room) + '</span></span></div>' : '')
+          + (person ? '<div class="now-fact"><span class="now-fact-icon">' + icon("cap") + '</span><span><span class="now-fact-label">Öğretim elemanı</span><span class="now-fact-value">' + escapeHtml(person) + '</span></span></div>' : '');
+        var pct = running ? Math.min(100, Math.max(0, Math.round((nowMin - s) / (e - s) * 100))) : 0;
+        var kind = courseKindCopy(c);
+        return '<section class="now-card' + (running ? ' is-running' : '') + '">'
+          + '<div class="now-top">' + pill + '<span class="now-side">' + side + '</span></div>'
+          + (kind ? '<div class="now-kind">' + kind + '</div>' : '')
+          + '<h2 class="now-title">' + escapeHtml(c.name) + confirmChip(c) + '</h2>'
+          + (running ? '' : '<div class="now-time">' + escapeHtml(c.start) + '–' + escapeHtml(c.end) + '</div>')
+          + (facts ? '<div class="now-facts">' + facts + '</div>' : '')
+          + (running ? '<div class="now-progress"><div class="now-progress-labels"><span>' + escapeHtml(c.start) + '</span><strong>%' + pct + ' tamamlandı</strong><span>' + escapeHtml(c.end) + '</span></div><div class="now-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Dersin geçen süresi"><span style="width:' + pct + '%"></span></div></div>' : '')
+          + '<div class="now-actions"><button class="now-primary" data-course="' + escapeHtml(c.id) + '">' + icon("info") + 'Ders ayrıntısı</button><button class="now-ghost" data-route="program">' + icon("calendar") + 'Program</button></div>'
+          + '</section>';
+      }
+
+      function flowSection(plan) {
+        var isToday = plan.list.length > 0;
+        var list = (plan.list.length ? plan.list : (plan.nextList || [])).slice().sort(function (a, b) {
+          return (timeToMinutes(a.start) || 0) - (timeToMinutes(b.start) || 0);
+        });
+        if (!list.length) return "";
+        var nowMin = nowInMinutes();
+        var ids = list.map(function (c) { return c.id; });
+        var clashes = conflicts().filter(function (k) { return !k.shared && ids.indexOf(k.a.id) !== -1 && ids.indexOf(k.b.id) !== -1; }).length;
+        var nextId = "";
+        if (isToday) {
+          var up = list.find(function (c) { return (timeToMinutes(c.start) || 0) > nowMin; });
+          nextId = up ? up.id : "";
+        }
+        var rows = [];
+        list.forEach(function (c, i) {
+          var s = timeToMinutes(c.start), e = timeToMinutes(c.end);
+          if (i > 0) {
+            var prevEnd = timeToMinutes(list[i - 1].end);
+            if (prevEnd !== null && s !== null && s - prevEnd >= 30) {
+              rows.push('<div class="flow-gap">' + icon("clock") + '<span>' + spanCopy(s - prevEnd) + ' ara</span></div>');
+            }
+          }
+          var state = "";
+          if (isToday && e !== null && e <= nowMin) state = "done";
+          else if (isToday && s !== null && s <= nowMin && nowMin < e) state = "live";
+          else if (c.id === nextId) state = "next";
+          var badge = state === "live" ? '<span class="flow-badge is-live">Şu an</span>'
+            : state === "next" ? '<span class="flow-badge is-next">Sıradaki</span><span class="flow-rel">' + icon("clock") + spanCopy(s - nowMin) + ' sonra</span>'
+            : state === "done" ? '<span class="flow-badge is-done">Bitti</span>' : '';
+          var person = personName(c);
+          var room = cleanDebugCopy(c.location);
+          var meta = [c.code ? escapeHtml(c.code) : "", person ? escapeHtml(person) : "", room ? '<strong>' + escapeHtml(room) + '</strong>' : ""].filter(Boolean).join(" · ");
+          rows.push('<button class="flow-row is-' + (state || "idle") + '" data-course="' + escapeHtml(c.id) + '">'
+            + '<span class="flow-time"><strong>' + escapeHtml(c.start) + '</strong><span>' + escapeHtml(c.end) + '</span></span>'
+            + '<span class="flow-main">' + (badge ? '<span class="flow-badges">' + badge + '</span>' : '')
+            + '<span class="flow-title">' + escapeHtml(c.name) + confirmChip(c) + '</span>'
+            + (meta ? '<span class="flow-meta">' + meta + '</span>' : '') + '</span></button>');
+        });
+        var heading = isToday ? 'Günün akışı' : escapeHtml(plan.when) + ' · ' + diningDateLabel(plan.nextIso);
+        return '<section class="section"><div class="section-heading flow-heading"><h2>' + heading + '</h2>'
+          + '<span class="flow-chips"><span class="flow-chip">' + list.length + ' ders</span>'
+          + (clashes ? '<span class="flow-chip is-bad">' + clashes + ' çakışma</span>' : '<span class="flow-chip is-ok">Çakışma yok</span>') + '</span></div>'
+          + (!isToday ? '<p class="stepper-label" style="margin:0 0 8px">' + (isoWeekday(turkeyDateIso()) ? "Bugün seçtiğin derslerden hiçbiri yok." : "Hafta sonu ders yok.") + ' Ders olan bir sonraki gün:</p>' : '')
+          + '<div class="flow-list">' + rows.join("") + '</div></section>';
+      }
+
+      function quickTools() {
+        var tools = [
+          ['data-route="agenda" data-agenda-tab="calendar"', "clock", "Akademik takvim", "Tatiller ve sınav haftaları"],
+          ['data-route="grades"', "check", "Notlarım", "Ortalama hesabı"],
+          ['data-route="curriculum"', "database", "Ders planı", "Bölümünün dersleri"],
+          ['data-route="campus"', "map", "Kampüs rehberi", "Birim ve program ara"]
+        ];
+        return '<section class="section"><div class="section-heading"><h2>Hızlı araçlar</h2></div><div class="quick-grid">'
+          + tools.map(function (t) {
+              return '<button class="quick-tool" ' + t[0] + '><span class="quick-icon">' + icon(t[1]) + '</span><span class="quick-text"><span class="quick-title">' + t[2] + '</span><span class="quick-copy">' + t[3] + '</span></span></button>';
+            }).join("") + '</div></section>';
+      }
+
+      function deviceNote() {
+        return '<div class="device-note">' + icon("shield") + '<span><strong>Seçimlerin bu cihazda.</strong> Hesap yok; derslerin, notların ve devamsızlığın yalnız bu telefonda saklanır. Bir kez açtığın program internet yokken de görünür.</span></div>';
+      }
+
       function renderToday() {
         if (medMode()) { renderMedToday(); return; }
         var department = currentDepartment();
@@ -4800,11 +5106,12 @@
         var html = ''
           + brandHeader()
           + deptChip()
+          + (plan.isToday && plan.list.length ? '<p class="today-lead">Bugün <strong>' + plan.list.length + ' dersin</strong> var.</p>' : '')
           + (team() ? '<button class="source-button" data-sheet="source"><span class="source-dot">i</span><span>' + sourceStatus() + '</span></button>' : '')
           + stateBanner()
           + (conflict ? '<button class="alert-card" data-route="program"><span class="icon-tile" style="background:#fff;color:var(--red)">' + icon("alert") + '</span><span><strong>' + conflictTitle(conflict) + '</strong><span>' + escapeHtml(conflict.a.name) + ' ve ' + escapeHtml(conflict.b.name) + ' · ' + escapeHtml(conflict.start) + '–' + escapeHtml(conflict.end) + '</span></span>' + icon("chevron") + '</button>' : "")
-          + (next ? '<button class="hero-course" data-course="' + escapeHtml(next.id) + '"><div class="kicker">' + escapeHtml(plan.label) + '</div><div class="hero-row"><span class="hero-icon">' + icon(department.icon) + '</span><span class="hero-main"><span class="hero-title">' + escapeHtml(next.name) + '</span><span class="hero-meta">' + (plan.isToday ? '' : escapeHtml(plan.when) + ' · ') + escapeHtml(next.start) + '–' + escapeHtml(next.end) + placeCopy(next) + '</span><div class="hero-glance"><span class="glance-badge glance-time">' + icon("calendar") + ' ' + escapeHtml(next.start) + '–' + escapeHtml(next.end) + '</span>' + (next.location ? '<span class="glance-badge glance-room">' + escapeHtml(cleanDebugCopy(next.location)) + '</span>' : '') + '</div><span class="hero-sub">' + escapeHtml(next.departmentName) + ' · ' + gradeCopy(next) + branchCopy(next) + '</span></span>' + icon("chevron") + '</div></button>' : emptyProgramCard())
-          + (hasImportedRows() && timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')
+          + (next ? nowCard(plan) : emptyProgramCard())
+          + (hasImportedRows() && !noSelection ? (plan.list.length || plan.nextList ? flowSection(plan) : (timeline ? '<section class="section"><div class="section-heading">' + timeline + '</section>' : '')) : '')
           + todayAnnouncementCard()
           + todayDiningCard()
           + weeklyAbsenceCheck()
@@ -4814,6 +5121,8 @@
               return tiles.length ? '<section class="section"><div class="tile-grid"' + (tiles.length === 1 ? ' style="grid-template-columns:minmax(0,1fr)"' : '') + '>' + tiles.join("") + '</div></section>' : '';
             })()
           + gradeTodayCard()
+          + quickTools()
+          + deviceNote()
           + (team() ? '<section class="section"><div class="context-grid">' + contextCard("announcement", "database", "Veri kapsamı", recordStats().total + " aday kayıt · 0 yayımlanmış", "coverage") + '</div></section>' : "");
         screen.innerHTML = layout(html, "today", false);
       }
@@ -4839,6 +5148,15 @@
             title = "Yemekhane";
             copy = diningCardCopy();
           }
+        }
+        // Stitch tasarımı: yemekler çip olarak; kalori belgede yazıyorsa (calories_text). Fiyat ve
+        // servis saati verisi yok, gösterilmez.
+        var shownRow = (row && row.items_raw && row.items_raw.length) ? row : (function () { var n = nextDiningRow(today); return n && n.items_raw && n.items_raw.length ? n : null; })();
+        if (shownRow && !(row && row.service_status === "official_holiday")) {
+          var kcal = String(shownRow.calories_text || "").match(/^\d{3,4}$/) ? shownRow.calories_text + ' kcal' : '';
+          return '<section class="section"><div class="section-heading"><h2>' + escapeHtml(title === "Bugün yemekhanede" ? "Günün menüsü" : title) + '</h2><button class="text-button" data-sheet="menu">Aylık menü</button></div>'
+            + '<button class="menu-card" data-sheet="menu">' + (kcal ? '<span class="menu-kcal">' + escapeHtml(kcal) + '</span>' : '')
+            + '<span class="menu-chips">' + shownRow.items_raw.map(function (it) { return '<span class="menu-chip">' + escapeHtml(diningItemLabel(it)) + '</span>'; }).join("") + '</span></button></section>';
         }
         return '<section class="section">' + agendaCard("tint-cream", "utensils", title, copy, "", 'data-sheet="menu"') + '</section>';
       }
@@ -6576,6 +6894,8 @@
 
         if (target.hasAttribute("data-route")) {
           closeSheet();
+          // Bugün'deki "Akademik takvim" kısayolu Gündem'in takvim sekmesini açar.
+          if (target.hasAttribute("data-agenda-tab")) state.agenda = target.getAttribute("data-agenda-tab");
           route(target.getAttribute("data-route"));
           return;
         }
